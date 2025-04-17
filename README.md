@@ -1,5 +1,7 @@
 # KeyedColors
 
+![KeyedColors Logo](logo.ico)
+
 A simple Windows application that allows users to create custom display profiles with gamma and contrast adjustments. Each profile can be assigned a custom hotkey for quick access.
 
 ## Features
@@ -59,10 +61,11 @@ Copyright © 2025 qlintenFX
 
 If you find KeyedColors useful, please consider supporting its development through a donation. This helps maintain the project and add new features.
 
-You can donate via:
+[![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/qlintenfx)
+
+You can also support via:
 - [GitHub Sponsors](#) (Coming soon)
 - [PayPal](#) (Add your PayPal link)
-- [Ko-fi](#) (Add your Ko-fi link)
 
 ## Contributing
 
