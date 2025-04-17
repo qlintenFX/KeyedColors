@@ -39,6 +39,12 @@ partial class Form1
         this.updateProfileButton = new System.Windows.Forms.Button();
         this.addProfileButton = new System.Windows.Forms.Button();
         
+        this.mainTabControl = new System.Windows.Forms.TabControl();
+        this.profilesTabPage = new System.Windows.Forms.TabPage();
+        this.settingsTabPage = new System.Windows.Forms.TabPage();
+        this.startWithWindowsCheckBox = new System.Windows.Forms.CheckBox();
+        this.minimizeToTrayCheckBox = new System.Windows.Forms.CheckBox();
+        
         this.settingsGroupBox = new System.Windows.Forms.GroupBox();
         this.resetButton = new System.Windows.Forms.Button();
         this.settingsLabel = new System.Windows.Forms.Label();
@@ -127,6 +133,41 @@ partial class Form1
         this.addProfileButton.UseVisualStyleBackColor = true;
         this.addProfileButton.Click += new System.EventHandler(this.addProfileButton_Click);
         
+        // mainTabControl
+        this.mainTabControl.Dock = System.Windows.Forms.DockStyle.Fill;
+        this.mainTabControl.Controls.Add(this.profilesTabPage);
+        this.mainTabControl.Controls.Add(this.settingsTabPage);
+        
+        // profilesTabPage
+        this.profilesTabPage.Text = "Profiles";
+        this.profilesTabPage.Controls.Add(this.profilesGroupBox);
+        this.profilesTabPage.Controls.Add(this.settingsGroupBox);
+        
+        // settingsTabPage
+        this.settingsTabPage.Text = "Settings";
+        this.settingsTabPage.Controls.Add(this.startWithWindowsCheckBox);
+        this.settingsTabPage.Controls.Add(this.minimizeToTrayCheckBox);
+        
+        // startWithWindowsCheckBox
+        this.startWithWindowsCheckBox.AutoSize = true;
+        this.startWithWindowsCheckBox.Location = new System.Drawing.Point(12, 12);
+        this.startWithWindowsCheckBox.Name = "startWithWindowsCheckBox";
+        this.startWithWindowsCheckBox.Size = new System.Drawing.Size(200, 19);
+        this.startWithWindowsCheckBox.TabIndex = 0;
+        this.startWithWindowsCheckBox.Text = "Start with Windows";
+        this.startWithWindowsCheckBox.UseVisualStyleBackColor = true;
+        this.startWithWindowsCheckBox.CheckedChanged += new System.EventHandler(this.startWithWindowsCheckBox_CheckedChanged);
+        
+        // minimizeToTrayCheckBox
+        this.minimizeToTrayCheckBox.AutoSize = true;
+        this.minimizeToTrayCheckBox.Location = new System.Drawing.Point(12, 37);
+        this.minimizeToTrayCheckBox.Name = "minimizeToTrayCheckBox";
+        this.minimizeToTrayCheckBox.Size = new System.Drawing.Size(200, 19);
+        this.minimizeToTrayCheckBox.TabIndex = 1;
+        this.minimizeToTrayCheckBox.Text = "Minimize to System Tray";
+        this.minimizeToTrayCheckBox.UseVisualStyleBackColor = true;
+        this.minimizeToTrayCheckBox.CheckedChanged += new System.EventHandler(this.minimizeToTrayCheckBox_CheckedChanged);
+        
         // settingsGroupBox
         // 
         this.settingsGroupBox.Controls.Add(this.resetButton);
@@ -208,8 +249,7 @@ partial class Form1
         this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
         this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
         this.ClientSize = new System.Drawing.Size(483, 372);
-        this.Controls.Add(this.settingsGroupBox);
-        this.Controls.Add(this.profilesGroupBox);
+        this.Controls.Add(this.mainTabControl);
         this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
         this.Icon = Properties.Resources.AppIcon;
         this.MaximizeBox = false;
@@ -241,4 +281,9 @@ partial class Form1
     private System.Windows.Forms.Button resetButton;
     private System.Windows.Forms.Label hotkeyLabel;
     private System.Windows.Forms.Button setHotkeyButton;
+    private System.Windows.Forms.TabControl mainTabControl;
+    private System.Windows.Forms.TabPage profilesTabPage;
+    private System.Windows.Forms.TabPage settingsTabPage;
+    private System.Windows.Forms.CheckBox startWithWindowsCheckBox;
+    private System.Windows.Forms.CheckBox minimizeToTrayCheckBox;
 }
