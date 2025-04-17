@@ -5,7 +5,6 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.IO;
-using Microsoft.Win32;
 
 namespace KeyedColors;
 
@@ -18,8 +17,6 @@ public partial class Form1 : Form
     private Profile? currentProfile;
     private bool isMinimized = false;
     private string logPath;
-    private bool minimizeToTray = true;
-    private bool startWithWindows = false;
 
     // For handling WM_HOTKEY messages
     private const int WM_HOTKEY = 0x0312;
@@ -35,9 +32,6 @@ public partial class Form1 : Form
             LogMessage("Calling InitializeComponent");
             InitializeComponent();
             LogMessage("InitializeComponent completed");
-
-            // Load settings
-            LoadSettings();
 
             // Initialize managers
             LogMessage("Creating ProfileManager");
@@ -735,68 +729,18 @@ public partial class Form1 : Form
         }
     }
 
-    private void LoadSettings()
-    {
-        try
-        {
-            using (RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", false))
-            {
-                startWithWindows = key?.GetValue("KeyedColors") != null;
-                startWithWindowsCheckBox.Checked = startWithWindows;
-            }
-            minimizeToTrayCheckBox.Checked = minimizeToTray;
-        }
-        catch (Exception ex)
-        {
-            LogMessage($"Error loading settings: {ex.Message}");
-        }
-    }
-
-    private void startWithWindowsCheckBox_CheckedChanged(object? sender, EventArgs e)
-    {
-        bool newStartWithWindows = startWithWindowsCheckBox.Checked;
-        if (newStartWithWindows != startWithWindows)
-        {
-            try
-            {
-                using (RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
-                {
-                    if (newStartWithWindows)
-                    {
-                        key?.SetValue("KeyedColors", $"\"{Application.ExecutablePath}\"");
-                    }
-                    else
-                    {
-                        key?.DeleteValue("KeyedColors", false);
-                    }
-                }
-                startWithWindows = newStartWithWindows;
-            }
-            catch (Exception ex)
-            {
-                LogMessage($"Error updating startup settings: {ex.Message}");
-                MessageBox.Show($"Failed to update startup settings: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                startWithWindowsCheckBox.Checked = startWithWindows;
-            }
-        }
-    }
-
-    private void minimizeToTrayCheckBox_CheckedChanged(object? sender, EventArgs e)
-    {
-        minimizeToTray = minimizeToTrayCheckBox.Checked;
-    }
-
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
-        if (e.CloseReason == CloseReason.UserClosing && minimizeToTray)
+        if (e.CloseReason == CloseReason.UserClosing)
         {
+            // Hide instead of close when user clicks X
             e.Cancel = true;
-            WindowState = FormWindowState.Minimized;
-            ShowInTaskbar = false;
+            this.Hide();
             isMinimized = true;
-            return;
         }
-
-        base.OnFormClosing(e);
+        else
+        {
+            base.OnFormClosing(e);
+        }
     }
 }
