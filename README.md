@@ -61,7 +61,7 @@ Copyright © 2025 qlintenFX
 
 If you find KeyedColors useful, please consider supporting its development through a donation. This helps maintain the project and add new features.
 
-[![Support me on Ko-fi](kofi-promo.jpg)](https://ko-fi.com/qlintenfx)
+<a href="https://ko-fi.com/qlintenfx"><img src="kofi-promo.jpg" alt="Support me on Ko-fi"></a>
 
 [![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/qlintenfx)
 
