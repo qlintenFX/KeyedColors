@@ -211,7 +211,7 @@ partial class Form1
         this.Controls.Add(this.settingsGroupBox);
         this.Controls.Add(this.profilesGroupBox);
         this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-        this.Icon = new System.Drawing.Icon("logo.ico");
+        this.Icon = Properties.Resources.AppIcon;
         this.MaximizeBox = false;
         this.Name = "Form1";
         this.StartPosition = FormStartPosition.CenterScreen;

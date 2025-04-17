@@ -8,9 +8,13 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
+#nullable enable
+
 namespace KeyedColors.Properties {
     using System;
     using System.Drawing;
+    using System.Reflection;
+    using System.Windows.Forms;
     
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
@@ -24,9 +28,9 @@ namespace KeyedColors.Properties {
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
         
-        private static global::System.Resources.ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager? resourceMan;
         
-        private static global::System.Globalization.CultureInfo resourceCulture;
+        private static global::System.Globalization.CultureInfo? resourceCulture;
         
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
@@ -42,7 +46,7 @@ namespace KeyedColors.Properties {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("KeyedColors.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
-                return resourceMan;
+                return resourceMan!;
             }
         }
         
@@ -53,7 +57,7 @@ namespace KeyedColors.Properties {
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
             get {
-                return resourceCulture;
+                return resourceCulture ?? global::System.Globalization.CultureInfo.CurrentUICulture;
             }
             set {
                 resourceCulture = value;
@@ -66,7 +70,17 @@ namespace KeyedColors.Properties {
         internal static Icon AppIcon {
             get {
                 try {
-                    // Try to load the icon from logo.ico in the root folder
+                    // First try to load from embedded resources
+                    Assembly assembly = Assembly.GetExecutingAssembly();
+                    using (Stream? iconStream = assembly.GetManifestResourceStream("KeyedColors.logo.ico"))
+                    {
+                        if (iconStream != null)
+                        {
+                            return new Icon(iconStream);
+                        }
+                    }
+
+                    // Try to load the icon from logo.ico in the root folder as fallback
                     string iconPath = System.IO.Path.Combine(
                         AppDomain.CurrentDomain.BaseDirectory,
                         "logo.ico");
@@ -74,49 +88,20 @@ namespace KeyedColors.Properties {
                     if (System.IO.File.Exists(iconPath)) {
                         return new Icon(iconPath);
                     }
-                } catch {
-                    // Fall through to default icon if there's an error
+
+                    // Try to extract from the executable as last resort
+                    Icon? exeIcon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+                    if (exeIcon != null)
+                    {
+                        return exeIcon;
+                    }
+                } 
+                catch {
+                    // Fall through to system icon if there's an error
                 }
                 
-                // Create a logo-like icon programmatically as a fallback
-                Bitmap bitmap = new Bitmap(32, 32);
-                using (Graphics g = Graphics.FromImage(bitmap))
-                {
-                    g.Clear(Color.FromArgb(0, 120, 215)); // Windows blue
-                    
-                    // Draw a simple key-like shape
-                    using (Pen pen = new Pen(Color.White, 2))
-                    {
-                        // Draw key circle
-                        g.DrawEllipse(pen, 5, 5, 10, 10);
-                        
-                        // Draw key stem
-                        g.DrawLine(pen, 15, 10, 26, 10);
-                        
-                        // Draw teeth
-                        g.DrawLine(pen, 20, 10, 20, 15);
-                        g.DrawLine(pen, 23, 10, 23, 18);
-                    }
-                    
-                    // Draw a simple color palette
-                    using (SolidBrush brush = new SolidBrush(Color.Red))
-                    {
-                        g.FillRectangle(brush, 5, 20, 6, 6);
-                    }
-                    using (SolidBrush brush = new SolidBrush(Color.Green))
-                    {
-                        g.FillRectangle(brush, 13, 20, 6, 6);
-                    }
-                    using (SolidBrush brush = new SolidBrush(Color.Blue))
-                    {
-                        g.FillRectangle(brush, 21, 20, 6, 6);
-                    }
-                }
-                
-                // Convert to icon
-                IntPtr hIcon = bitmap.GetHicon();
-                Icon icon = Icon.FromHandle(hIcon);
-                return icon;
+                // If all else fails, return the system application icon
+                return SystemIcons.Application;
             }
         }
     }

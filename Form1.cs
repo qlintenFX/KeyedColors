@@ -4,46 +4,175 @@ using System.Drawing;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Reflection;
+using System.IO;
 
 namespace KeyedColors;
 
 public partial class Form1 : Form
 {
-    private ProfileManager profileManager;
-    private DisplayManager displayManager;
+    private ProfileManager? profileManager;
+    private DisplayManager? displayManager;
     private HotkeyManager? hotkeyManager;
     private NotifyIcon? trayIcon;
     private Profile? currentProfile;
     private bool isMinimized = false;
+    private string logPath;
 
     // For handling WM_HOTKEY messages
     private const int WM_HOTKEY = 0x0312;
 
     public Form1()
     {
-        InitializeComponent();
-
-        // Initialize managers
-        profileManager = new ProfileManager();
-        displayManager = new DisplayManager();
+        // Set up logging
+        logPath = GetWritableLogPath("keyedcolors_form_log.txt");
+        LogMessage("Form1 constructor starting");
         
-        // Setup UI after load
-        this.Load += Form1_Load;
-        this.FormClosing += Form1_FormClosing;
+        try
+        {
+            LogMessage("Calling InitializeComponent");
+            InitializeComponent();
+            LogMessage("InitializeComponent completed");
+
+            // Initialize managers
+            LogMessage("Creating ProfileManager");
+            profileManager = new ProfileManager();
+            LogMessage("ProfileManager created");
+            
+            LogMessage("Creating DisplayManager");
+            displayManager = new DisplayManager();
+            LogMessage("DisplayManager created");
+            
+            // Setup UI after load
+            LogMessage("Setting up Form events");
+            this.Load += Form1_Load;
+            this.FormClosing += Form1_FormClosing;
+            LogMessage("Form1 constructor completed successfully");
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"ERROR in Form1 constructor: {ex.Message}");
+            LogMessage(ex.StackTrace);
+            if (ex.InnerException != null)
+            {
+                LogMessage($"Inner exception: {ex.InnerException.Message}");
+                LogMessage(ex.InnerException.StackTrace);
+            }
+            MessageBox.Show($"Error initializing the application: {ex.Message}", "Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private void Form1_Load(object? sender, EventArgs e)
     {
-        // Initialize the hotkey manager after the form is loaded (handle is available)
-        hotkeyManager = new HotkeyManager(this.Handle);
-        hotkeyManager.HotkeyPressed += HotkeyManager_HotkeyPressed;
+        LogMessage("Form1_Load started");
+        try
+        {
+            // Initialize the hotkey manager after the form is loaded (handle is available)
+            LogMessage("Creating HotkeyManager");
+            hotkeyManager = new HotkeyManager(this.Handle);
+            hotkeyManager.HotkeyPressed += HotkeyManager_HotkeyPressed;
+            LogMessage("HotkeyManager created");
 
-        // Set up tray icon
-        SetupTrayIcon();
+            // Set up tray icon
+            LogMessage("Setting up tray icon");
+            SetupTrayIcon();
+            LogMessage("Tray icon setup completed");
 
-        // Load profiles and register hotkeys
-        LoadProfilesToUI();
-        RegisterAllHotkeys();
+            // Load profiles and register hotkeys
+            LogMessage("Loading profiles to UI");
+            LoadProfilesToUI();
+            LogMessage("Profiles loaded");
+            
+            LogMessage("Registering hotkeys");
+            RegisterAllHotkeys();
+            LogMessage("Hotkeys registered");
+            
+            LogMessage("Form1_Load completed successfully");
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"ERROR in Form1_Load: {ex.Message}");
+            LogMessage(ex.StackTrace);
+            if (ex.InnerException != null)
+            {
+                LogMessage($"Inner exception: {ex.InnerException.Message}");
+                LogMessage(ex.InnerException.StackTrace);
+            }
+            MessageBox.Show($"Error loading the application: {ex.Message}", "Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private void LogMessage(string? message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return;
+            
+        try
+        {
+            File.AppendAllText(logPath, $"[{DateTime.Now}] {message}\r\n");
+        }
+        catch
+        {
+            // Try once more with a different path if the first attempt fails
+            try
+            {
+                string altPath = Path.Combine(Path.GetTempPath(), "keyedcolors_form_log.txt");
+                File.AppendAllText(altPath, $"[{DateTime.Now}] {message}\r\n");
+                
+                // Update log path for future writes
+                logPath = altPath;
+            }
+            catch
+            {
+                // Ignore logging failures - don't want to cause cascading errors
+            }
+        }
+    }
+
+    private string GetWritableLogPath(string filename)
+    {
+        // List of potential log locations in order of preference
+        string[] potentialPaths = new string[]
+        {
+            // 1. Application directory
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, filename),
+            
+            // 2. Executable directory
+            Path.Combine(Path.GetDirectoryName(Application.ExecutablePath) ?? "", filename),
+            
+            // 3. User's temp directory
+            Path.Combine(Path.GetTempPath(), filename),
+            
+            // 4. User's documents folder
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "KeyedColors", filename),
+            
+            // 5. Desktop as last resort
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), filename)
+        };
+        
+        foreach (string path in potentialPaths)
+        {
+            try
+            {
+                // Ensure directory exists
+                string? directory = Path.GetDirectoryName(path);
+                if (directory != null && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+                
+                // Test if we can write to this location
+                File.AppendAllText(path, "");
+                return path;
+            }
+            catch
+            {
+                // Try next location if this one fails
+                continue;
+            }
+        }
+        
+        // If all else fails, return the first path and hope for the best
+        return potentialPaths[0];
     }
 
     private void Form1_FormClosing(object? sender, FormClosingEventArgs e)
@@ -52,7 +181,7 @@ public partial class Form1 : Form
         hotkeyManager?.UnregisterAllHotkeys();
         
         // Reset display settings to original
-        displayManager.ResetToDefault();
+        displayManager?.ResetToDefault();
         
         // Clean up tray icon
         if (trayIcon != null)
@@ -81,15 +210,77 @@ public partial class Form1 : Form
 
     private void SetupTrayIcon()
     {
+        LogMessage("SetupTrayIcon started");
         try
         {
             // Use the application icon
+            Icon appIcon;
+            
+            try
+            {
+                // First try to use the AppIcon property from Resources
+                appIcon = Properties.Resources.AppIcon;
+                LogMessage("Loaded icon from Properties.Resources.AppIcon");
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"Failed to get icon from Properties.Resources.AppIcon: {ex.Message}");
+                
+                // Try loading from embedded resources
+                try
+                {
+                    Assembly assembly = Assembly.GetExecutingAssembly();
+                    using (Stream? iconStream = assembly.GetManifestResourceStream("KeyedColors.logo.ico"))
+                    {
+                        if (iconStream != null)
+                        {
+                            appIcon = new Icon(iconStream);
+                            LogMessage("Loaded icon from embedded resource");
+                        }
+                        else
+                        {
+                            // Try the file system as a last resort
+                            string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logo.ico");
+                            LogMessage($"Trying to load icon from: {iconPath}");
+                            
+                            if (File.Exists(iconPath))
+                            {
+                                appIcon = new Icon(iconPath);
+                                LogMessage("Loaded icon from file system");
+                            }
+                            else
+                            {
+                                // Fall back to executable icon
+                                appIcon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
+                                LogMessage("Using icon from executable");
+                            }
+                        }
+                    }
+                }
+                catch (Exception exInner)
+                {
+                    LogMessage($"Failed to get icon from resources: {exInner.Message}");
+                    try
+                    {
+                        appIcon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
+                        LogMessage("Using icon from executable");
+                    }
+                    catch
+                    {
+                        // Fallback to system icon
+                        appIcon = SystemIcons.Application;
+                        LogMessage("Using system application icon");
+                    }
+                }
+            }
+            
             trayIcon = new NotifyIcon
             {
-                Icon = new Icon("logo.ico"),
+                Icon = appIcon,
                 Text = "KeyedColors",
                 Visible = true
             };
+            LogMessage("NotifyIcon created successfully");
 
             // Create context menu for tray icon
             ContextMenuStrip menu = new ContextMenuStrip();
@@ -106,24 +297,44 @@ public partial class Form1 : Form
 
             trayIcon.ContextMenuStrip = menu;
             trayIcon.MouseDoubleClick += TrayIcon_MouseDoubleClick;
+            LogMessage("Tray icon setup complete");
         }
         catch (Exception ex)
         {
-            // Fallback to system icon if there's an error
-            trayIcon = new NotifyIcon
-            {
-                Icon = SystemIcons.Application, 
-                Text = "KeyedColors",
-                Visible = true
-            };
+            LogMessage($"ERROR in SetupTrayIcon: {ex.Message}");
+            LogMessage(ex.StackTrace);
             
-            // Display error for debugging
-            MessageBox.Show("Error setting up tray icon: " + ex.Message, "Icon Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            try
+            {
+                // Fallback to system icon if there's an error
+                trayIcon = new NotifyIcon
+                {
+                    Icon = SystemIcons.Application, 
+                    Text = "KeyedColors",
+                    Visible = true
+                };
+                
+                ContextMenuStrip menu = new ContextMenuStrip();
+                menu.Items.Add("Show", null, ShowForm_Click);
+                menu.Items.Add("Exit", null, Exit_Click);
+                trayIcon.ContextMenuStrip = menu;
+                
+                LogMessage("Created fallback tray icon with system icon");
+            }
+            catch (Exception ex2)
+            {
+                LogMessage($"CRITICAL ERROR: Failed to create fallback tray icon: {ex2.Message}");
+                MessageBox.Show("Error setting up system tray icon. Application may not function correctly.", 
+                    "Critical Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 
     private void UpdateTrayProfilesMenu(ToolStripMenuItem profilesMenu)
     {
+        if (profileManager == null)
+            return;
+            
         profilesMenu.DropDownItems.Clear();
         
         foreach (Profile profile in profileManager.Profiles)
@@ -161,6 +372,9 @@ public partial class Form1 : Form
 
     private void LoadProfilesToUI()
     {
+        if (profileManager == null || profileListBox == null)
+            return;
+            
         // Clear and populate profiles listbox
         profileListBox.Items.Clear();
         foreach (Profile profile in profileManager.Profiles)
@@ -177,7 +391,7 @@ public partial class Form1 : Form
 
     private void RegisterAllHotkeys()
     {
-        if (hotkeyManager == null) return;
+        if (hotkeyManager == null || profileManager == null) return;
         
         // Unregister all existing hotkeys first
         hotkeyManager.UnregisterAllHotkeys();
@@ -214,7 +428,7 @@ public partial class Form1 : Form
 
     private void ApplyProfile(Profile profile)
     {
-        if (profile != null)
+        if (profile != null && displayManager != null)
         {
             currentProfile = profile;
             displayManager.ApplySettings(profile.Gamma, profile.Contrast);
@@ -223,14 +437,17 @@ public partial class Form1 : Form
             if (!isMinimized)
             {
                 // Update UI to reflect the current profile
-                if (profileListBox.Items.Contains(profile))
+                if (profileListBox != null && profileListBox.Items.Contains(profile))
                 {
                     profileListBox.SelectedItem = profile;
                 }
                 
                 // Update sliders
-                gammaTrackBar.Value = (int)(profile.Gamma * 100);
-                contrastTrackBar.Value = (int)(profile.Contrast * 100);
+                if (gammaTrackBar != null && contrastTrackBar != null)
+                {
+                    gammaTrackBar.Value = (int)(profile.Gamma * 100);
+                    contrastTrackBar.Value = (int)(profile.Contrast * 100);
+                }
                 
                 // Update label
                 UpdateSettingsLabel();
@@ -240,10 +457,13 @@ public partial class Form1 : Form
 
     private void UpdateSettingsLabel()
     {
-        double gamma = gammaTrackBar.Value / 100.0;
-        double contrast = contrastTrackBar.Value;
-        
-        settingsLabel.Text = $"Gamma: {gamma:F2}, Contrast: {contrast}%";
+        if (gammaTrackBar != null && contrastTrackBar != null && settingsLabel != null)
+        {
+            double gamma = gammaTrackBar.Value / 100.0;
+            double contrast = contrastTrackBar.Value;
+            
+            settingsLabel.Text = $"Gamma: {gamma:F2}, Contrast: {contrast}%";
+        }
     }
 
     private void gammaTrackBar_ValueChanged(object sender, EventArgs e)
@@ -251,9 +471,12 @@ public partial class Form1 : Form
         UpdateSettingsLabel();
         
         // Apply settings immediately for preview
-        double gamma = gammaTrackBar.Value / 100.0;
-        double contrast = contrastTrackBar.Value / 100.0;
-        displayManager.ApplySettings(gamma, contrast);
+        if (displayManager != null && gammaTrackBar != null && contrastTrackBar != null)
+        {
+            double gamma = gammaTrackBar.Value / 100.0;
+            double contrast = contrastTrackBar.Value / 100.0;
+            displayManager.ApplySettings(gamma, contrast);
+        }
     }
 
     private void contrastTrackBar_ValueChanged(object sender, EventArgs e)
@@ -261,9 +484,12 @@ public partial class Form1 : Form
         UpdateSettingsLabel();
         
         // Apply settings immediately for preview
-        double gamma = gammaTrackBar.Value / 100.0;
-        double contrast = contrastTrackBar.Value / 100.0;
-        displayManager.ApplySettings(gamma, contrast);
+        if (displayManager != null && gammaTrackBar != null && contrastTrackBar != null)
+        {
+            double gamma = gammaTrackBar.Value / 100.0;
+            double contrast = contrastTrackBar.Value / 100.0;
+            displayManager.ApplySettings(gamma, contrast);
+        }
     }
 
     private void profileListBox_SelectedIndexChanged(object sender, EventArgs e)
@@ -288,6 +514,9 @@ public partial class Form1 : Form
 
     private void addProfileButton_Click(object sender, EventArgs e)
     {
+        if (profileManager == null || gammaTrackBar == null || contrastTrackBar == null)
+            return;
+            
         // Create a new profile with current settings
         double gamma = gammaTrackBar.Value / 100.0;
         double contrast = contrastTrackBar.Value / 100.0;
@@ -339,6 +568,10 @@ public partial class Form1 : Form
 
     private void updateProfileButton_Click(object sender, EventArgs e)
     {
+        if (profileManager == null || profileListBox == null || 
+            gammaTrackBar == null || contrastTrackBar == null)
+            return;
+            
         if (profileListBox.SelectedItem is Profile selectedProfile)
         {
             // Update the selected profile with current settings
@@ -356,6 +589,9 @@ public partial class Form1 : Form
 
     private void deleteProfileButton_Click(object sender, EventArgs e)
     {
+        if (profileManager == null || profileListBox == null)
+            return;
+            
         if (profileListBox.SelectedItem is Profile selectedProfile)
         {
             if (MessageBox.Show($"Are you sure you want to delete the profile '{selectedProfile.Name}'?",
@@ -390,7 +626,7 @@ public partial class Form1 : Form
 
     private void setHotkeyButton_Click(object sender, EventArgs e)
     {
-        if (profileListBox.SelectedItem is Profile selectedProfile && hotkeyManager != null)
+        if (profileListBox.SelectedItem is Profile selectedProfile && hotkeyManager != null && profileManager != null && hotkeyLabel != null)
         {
             // Create a form for hotkey configuration
             using (var form = new Form())
@@ -482,12 +718,15 @@ public partial class Form1 : Form
     private void resetButton_Click(object sender, EventArgs e)
     {
         // Reset display to default settings
-        displayManager.ResetToDefault();
-        
-        // Update UI to show default values
-        gammaTrackBar.Value = 100;
-        contrastTrackBar.Value = 50;
-        UpdateSettingsLabel();
+        if (displayManager != null && gammaTrackBar != null && contrastTrackBar != null)
+        {
+            displayManager.ResetToDefault();
+            
+            // Update UI to show default values
+            gammaTrackBar.Value = 100;
+            contrastTrackBar.Value = 50;
+            UpdateSettingsLabel();
+        }
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)

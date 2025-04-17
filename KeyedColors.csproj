@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,10 +10,37 @@
     <Description>Simple display profile manager with hotkey support</Description>
     <Company>KeyedColors</Company>
     <ApplicationIcon>logo.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <RuntimeIdentifiers>win-x64;win-x86</RuntimeIdentifiers>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <!-- Debug settings to help diagnose issues -->
+    <DebugType>embedded</DebugType>
+    <!-- Single-file specific options -->
+    <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+    <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Publish readyToRun to optimize startup -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <!-- Ensure all resources are embedded -->
+    <PublishReadyToRunShowWarnings>true</PublishReadyToRunShowWarnings>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <!-- Keep debugging information in Release build for diagnostics -->
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="logo.ico" />
+    <EmbeddedResource Include="logo.ico">
+      <LogicalName>KeyedColors.logo.ico</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
@@ -30,5 +57,13 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+
+  <!-- Make sure logo.ico is not published as a separate file -->
+  <Target Name="ExcludeIconFromPublish" BeforeTargets="ComputeFilesToPublish">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="logo.ico" />
+      <ResolvedFileToPublish Remove="$(OutputPath)logo.ico" />
+    </ItemGroup>
+  </Target>
 
 </Project>

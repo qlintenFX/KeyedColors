@@ -51,9 +51,22 @@ A simple Windows application that allows users to create custom display profiles
 
 ## License
 
-This software is proprietary and is provided under a restricted license. See the LICENSE file for details.
+This software is licensed under the GNU General Public License v3.0 (GPL-3.0). See the LICENSE file for details.
 
-Copyright © 2025 qlintenFX - All Rights Reserved
+Copyright © 2025 qlintenFX
+
+## Support Development
+
+If you find KeyedColors useful, please consider supporting its development through a donation. This helps maintain the project and add new features.
+
+You can donate via:
+- [GitHub Sponsors](#) (Coming soon)
+- [PayPal](#) (Add your PayPal link)
+- [Ko-fi](#) (Add your Ko-fi link)
+
+## Contributing
+
+Contributions are welcome! See the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines.
 
 ## Acknowledgments
 
