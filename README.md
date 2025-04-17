@@ -64,6 +64,7 @@ If you find KeyedColors useful, please consider supporting its development throu
 ![Support me on Ko-fi](kofi-promo.jpg)
 
 [![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/qlintenfx)
+
 [![Donate with PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://paypal.me/qlintenFX?country.x=BE&locale.x=nl_NL)
 
 ## Contributing
