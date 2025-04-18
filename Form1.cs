@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.IO;
+using Microsoft.Win32;
 
 namespace KeyedColors;
 
@@ -17,6 +18,11 @@ public partial class Form1 : Form
     private Profile? currentProfile;
     private bool isMinimized = false;
     private string logPath;
+    private const string StartupRegistryKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+    private const string ApplicationName = "KeyedColors";
+    private const string SettingsRegistryKey = @"SOFTWARE\KeyedColors";
+    private const string MinimizeToTrayValue = "MinimizeToTray";
+    private bool minimizeToTray = true; // Default to true for backward compatibility
 
     // For handling WM_HOTKEY messages
     private const int WM_HOTKEY = 0x0312;
@@ -85,6 +91,12 @@ public partial class Form1 : Form
             LogMessage("Registering hotkeys");
             RegisterAllHotkeys();
             LogMessage("Hotkeys registered");
+            
+            // Load startup setting
+            UpdateStartWithWindowsCheckbox();
+            
+            // Load minimize to tray setting
+            LoadMinimizeToTraySetting();
             
             LogMessage("Form1_Load completed successfully");
         }
@@ -527,17 +539,17 @@ public partial class Form1 : Form
         using (var form = new Form())
         {
             form.Text = "New Profile";
-            form.ClientSize = new Size(300, 100);
+            form.ClientSize = new Size(350, 100);
             form.FormBorderStyle = FormBorderStyle.FixedDialog;
             form.StartPosition = FormStartPosition.CenterParent;
             form.MaximizeBox = false;
             form.MinimizeBox = false;
 
-            Label label = new Label() { Left = 20, Top = 20, Text = "Profile Name:" };
-            TextBox textBox = new TextBox() { Left = 100, Top = 20, Width = 180 };
+            Label label = new Label() { Left = 20, Top = 20, Text = "Profile Name:", AutoSize = true };
+            TextBox textBox = new TextBox() { Left = 120, Top = 20, Width = 200 };
             textBox.Text = name;
             
-            Button confirmButton = new Button() { Text = "OK", Left = 120, Width = 80, Top = 60, DialogResult = DialogResult.OK };
+            Button confirmButton = new Button() { Text = "OK", Left = 140, Width = 80, Top = 60, DialogResult = DialogResult.OK };
             form.AcceptButton = confirmButton;
             
             form.Controls.Add(label);
@@ -733,14 +745,191 @@ public partial class Form1 : Form
     {
         if (e.CloseReason == CloseReason.UserClosing)
         {
-            // Hide instead of close when user clicks X
-            e.Cancel = true;
-            this.Hide();
-            isMinimized = true;
+            if (minimizeToTray)
+            {
+                // Hide instead of close when user clicks X
+                e.Cancel = true;
+                this.Hide();
+                isMinimized = true;
+            }
+            // If minimizeToTray is false, allow the form to close normally
         }
         else
         {
             base.OnFormClosing(e);
+        }
+    }
+
+    private void startWithWindowsCheckBox_CheckedChanged(object sender, EventArgs e)
+    {
+        try
+        {
+            bool startWithWindows = startWithWindowsCheckBox.Checked;
+            SetStartWithWindows(startWithWindows);
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"Error changing Start with Windows setting: {ex.Message}");
+            MessageBox.Show($"Failed to update startup setting: {ex.Message}", "Settings Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            
+            // Reset checkbox to actual state without triggering event
+            startWithWindowsCheckBox.CheckedChanged -= startWithWindowsCheckBox_CheckedChanged;
+            UpdateStartWithWindowsCheckbox();
+            startWithWindowsCheckBox.CheckedChanged += startWithWindowsCheckBox_CheckedChanged;
+        }
+    }
+    
+    private void SetStartWithWindows(bool enabled)
+    {
+        LogMessage($"Setting Start with Windows to: {enabled}");
+        try
+        {
+            using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(StartupRegistryKey, true))
+            {
+                if (key == null)
+                {
+                    LogMessage("Failed to open registry key for startup");
+                    return;
+                }
+
+                if (enabled)
+                {
+                    string appPath = Application.ExecutablePath;
+                    key.SetValue(ApplicationName, appPath);
+                    LogMessage($"Added application to startup: {appPath}");
+                }
+                else
+                {
+                    key.DeleteValue(ApplicationName, false);
+                    LogMessage("Removed application from startup");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"Registry error: {ex.Message}");
+            throw;
+        }
+    }
+    
+    private void UpdateStartWithWindowsCheckbox()
+    {
+        LogMessage("Checking if application is set to start with Windows");
+        try
+        {
+            bool startupEnabled = false;
+            
+            using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(StartupRegistryKey, false))
+            {
+                if (key != null)
+                {
+                    string? value = key.GetValue(ApplicationName) as string;
+                    startupEnabled = !string.IsNullOrEmpty(value);
+                    LogMessage($"Start with Windows currently set to: {startupEnabled}");
+                }
+            }
+            
+            // Update checkbox without triggering event
+            startWithWindowsCheckBox.CheckedChanged -= startWithWindowsCheckBox_CheckedChanged;
+            startWithWindowsCheckBox.Checked = startupEnabled;
+            startWithWindowsCheckBox.CheckedChanged += startWithWindowsCheckBox_CheckedChanged;
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"Error checking startup setting: {ex.Message}");
+        }
+    }
+
+    private void minimizeToTrayCheckBox_CheckedChanged(object sender, EventArgs e)
+    {
+        try
+        {
+            minimizeToTray = minimizeToTrayCheckBox.Checked;
+            SaveMinimizeToTraySetting(minimizeToTray);
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"Error changing minimize to tray setting: {ex.Message}");
+            MessageBox.Show($"Failed to update minimize to tray setting: {ex.Message}", "Settings Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            
+            // Reset checkbox to actual state without triggering event
+            minimizeToTrayCheckBox.CheckedChanged -= minimizeToTrayCheckBox_CheckedChanged;
+            minimizeToTrayCheckBox.Checked = minimizeToTray;
+            minimizeToTrayCheckBox.CheckedChanged += minimizeToTrayCheckBox_CheckedChanged;
+        }
+    }
+    
+    private void SaveMinimizeToTraySetting(bool enabled)
+    {
+        LogMessage($"Setting Minimize to Tray to: {enabled}");
+        try
+        {
+            using (RegistryKey? key = Registry.CurrentUser.CreateSubKey(SettingsRegistryKey, true))
+            {
+                if (key == null)
+                {
+                    LogMessage("Failed to create/open registry key for settings");
+                    return;
+                }
+
+                key.SetValue(MinimizeToTrayValue, enabled ? 1 : 0, RegistryValueKind.DWord);
+                LogMessage($"Saved Minimize to Tray setting: {enabled}");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"Registry error saving minimize to tray setting: {ex.Message}");
+            throw;
+        }
+    }
+    
+    private void LoadMinimizeToTraySetting()
+    {
+        LogMessage("Loading minimize to tray setting");
+        try
+        {
+            using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(SettingsRegistryKey, false))
+            {
+                if (key != null)
+                {
+                    object? value = key.GetValue(MinimizeToTrayValue);
+                    if (value != null)
+                    {
+                        minimizeToTray = Convert.ToInt32(value) != 0;
+                    }
+                    else
+                    {
+                        // Default to true if setting doesn't exist (backward compatibility)
+                        minimizeToTray = true;
+                    }
+                }
+                else
+                {
+                    // Create the key for future use
+                    using (RegistryKey? newKey = Registry.CurrentUser.CreateSubKey(SettingsRegistryKey, true))
+                    {
+                        if (newKey != null)
+                        {
+                            newKey.SetValue(MinimizeToTrayValue, minimizeToTray ? 1 : 0, RegistryValueKind.DWord);
+                        }
+                    }
+                }
+                
+                LogMessage($"Minimize to tray setting loaded: {minimizeToTray}");
+                
+                // Update checkbox without triggering event
+                minimizeToTrayCheckBox.CheckedChanged -= minimizeToTrayCheckBox_CheckedChanged;
+                minimizeToTrayCheckBox.Checked = minimizeToTray;
+                minimizeToTrayCheckBox.CheckedChanged += minimizeToTrayCheckBox_CheckedChanged;
+            }
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"Error loading minimize to tray setting: {ex.Message}");
+            
+            // Use default (true) in case of error
+            minimizeToTray = true;
+            minimizeToTrayCheckBox.Checked = true;
         }
     }
 }
