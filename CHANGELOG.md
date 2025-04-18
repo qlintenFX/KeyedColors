@@ -4,6 +4,14 @@ All notable changes to KeyedColors will be documented in this file.
 
 ## [Unreleased]
 
+## [1.2.0] - Upcoming Release
+
+### Added
+- Added a dedicated Settings tab for application preferences
+- Added "Start with Windows" option to automatically launch the app at system startup
+- Added "Minimize to tray when closed" option to control app behavior when closing
+- Settings are saved to Registry and persist between application restarts
+
 ## [1.1.0] - 4-18-2025
 
 ### Added

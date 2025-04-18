@@ -12,6 +12,9 @@ A simple Windows application that allows users to create custom display profiles
 - Adjust gamma and contrast settings
 - Assign custom hotkeys to profiles for quick access
 - System tray integration for easy access
+- Dedicated Settings tab for application preferences
+- Option to start automatically with Windows
+- Configurable behavior when closing the application
 - Profiles are saved automatically and persist between sessions
 - Comes with three default presets:
   - **Default**: Standard display (Gamma: 1.0, Contrast: 50%)
@@ -36,8 +39,13 @@ A simple Windows application that allows users to create custom display profiles
    - Press a key combination (e.g., Ctrl+Alt+1)
    - Click OK to save the hotkey
 
-4. **System Tray**:
-   - The application minimizes to the system tray when closed
+4. **Configure Settings**:
+   - Navigate to the Settings tab
+   - Toggle "Start with Windows" to launch the app automatically with Windows
+   - Toggle "Minimize to tray when closed" to control whether the app minimizes to the system tray or fully closes when clicking the X button
+
+5. **System Tray**:
+   - The application can minimize to the system tray when closed (configurable in Settings)
    - Double-click the tray icon to restore the window
    - Right-click the tray icon for a menu of profiles and options
 
