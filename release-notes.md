@@ -1,3 +1,28 @@
+# KeyedColors v1.3.0
+
+## What's New
+This release adds a powerful Dynamic Controls feature for real-time display adjustments.
+
+### Added
+- Dynamic Controls feature with dedicated tab for real-time adjustments:
+  - Use Shift+Arrow keys for quick adjustments (Up/Down: Gamma, Left/Right: Contrast)
+  - Toggle to enable/disable dynamic controls
+  - Save your dynamic settings as a new profile with one click
+  - Dynamic controls state persists between application restarts
+
+### Fixed
+- Fixed bug where profile hotkeys would still work while Dynamic Controls are enabled
+- Improved handling of hotkey conflicts
+- Updated UI with increased window size for better layout
+
+## Installation
+Download and run the executable. No installation required.
+
+## Feedback
+Please report any issues or suggestions through GitHub issues.
+
+---
+
 # KeyedColors v1.2.0
 
 ## What's New

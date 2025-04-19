@@ -2,7 +2,7 @@
 
 All notable changes to KeyedColors will be documented in this file.
 
-## [1.3.0]
+## [1.3.0] - 4-19-2025
 
 ### Added
 - Added Dynamic Controls feature for real-time adjustments with hotkeys:
@@ -11,7 +11,11 @@ All notable changes to KeyedColors will be documented in this file.
   - Toggle to enable/disable dynamic controls
   - Option to save current dynamic settings as a new profile
 
-## [1.2.0] - 6-15-2025
+### Fixed
+- Fixed bug where profile hotkeys would still work while Dynamic Controls are enabled
+- Improved handling of hotkey conflicts between Dynamic Controls and profile hotkeys
+
+## [1.2.0] - 4-19-2025
 
 ### Added
 - Added a dedicated Settings tab for application preferences

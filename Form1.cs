@@ -244,13 +244,20 @@ public partial class Form1 : Form
         if (m.Msg == WM_HOTKEY)
         {
             // First check if it's a dynamic controls hotkey
-            if (dynamicControls != null && dynamicControls.ProcessHotkey(m.WParam))
+            if (dynamicControls != null && dynamicControls.IsEnabled && dynamicControls.ProcessHotkey(m.WParam))
             {
                 // Hotkey was handled by dynamic controls
                 return;
             }
             
-            // If not, check if it's a profile hotkey
+            // If dynamic controls are enabled, ignore profile hotkeys
+            if (dynamicControls != null && dynamicControls.IsEnabled)
+            {
+                base.WndProc(ref m);
+                return;
+            }
+            
+            // If dynamic controls are disabled, handle as a profile hotkey
             if (hotkeyManager != null)
             {
                 hotkeyManager.ProcessHotkey(m.WParam);
@@ -262,6 +269,13 @@ public partial class Form1 : Form
 
     private void HotkeyManager_HotkeyPressed(object? sender, HotkeyEventArgs e)
     {
+        // Don't apply profile hotkeys if dynamic controls are enabled
+        if (dynamicControls != null && dynamicControls.IsEnabled)
+        {
+            LogMessage("Profile hotkey ignored because Dynamic Controls are enabled");
+            return;
+        }
+        
         // Apply the profile settings when hotkey is pressed
         ApplyProfile(e.Profile);
     }
