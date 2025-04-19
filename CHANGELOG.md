@@ -4,7 +4,14 @@ All notable changes to KeyedColors will be documented in this file.
 
 ## [Unreleased]
 
-## [1.2.0] - Upcoming Release
+### Added
+- Added Dynamic Controls feature for real-time adjustments with hotkeys:
+  - Shift+Up/Down arrows for gamma adjustment
+  - Shift+Left/Right arrows for contrast adjustment
+  - Toggle to enable/disable dynamic controls
+  - Option to save current dynamic settings as a new profile
+
+## [1.2.0] - 6-15-2025
 
 ### Added
 - Added a dedicated Settings tab for application preferences

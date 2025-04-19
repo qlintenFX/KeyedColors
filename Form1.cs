@@ -14,6 +14,7 @@ public partial class Form1 : Form
     private ProfileManager? profileManager;
     private DisplayManager? displayManager;
     private HotkeyManager? hotkeyManager;
+    private DynamicControls? dynamicControls;
     private NotifyIcon? trayIcon;
     private Profile? currentProfile;
     private bool isMinimized = false;
@@ -22,6 +23,7 @@ public partial class Form1 : Form
     private const string ApplicationName = "KeyedColors";
     private const string SettingsRegistryKey = @"SOFTWARE\KeyedColors";
     private const string MinimizeToTrayValue = "MinimizeToTray";
+    private const string DynamicControlsEnabledValue = "DynamicControlsEnabled";
     private bool minimizeToTray = true; // Default to true for backward compatibility
 
     // For handling WM_HOTKEY messages
@@ -48,22 +50,56 @@ public partial class Form1 : Form
             displayManager = new DisplayManager();
             LogMessage("DisplayManager created");
             
-            // Setup UI after load
-            LogMessage("Setting up Form events");
-            this.Load += Form1_Load;
-            this.FormClosing += Form1_FormClosing;
-            LogMessage("Form1 constructor completed successfully");
+            LogMessage("Creating HotkeyManager");
+            hotkeyManager = new HotkeyManager(this.Handle);
+            hotkeyManager.HotkeyPressed += HotkeyManager_HotkeyPressed;
+            LogMessage("HotkeyManager created");
+            
+            LogMessage("Creating DynamicControls");
+            dynamicControls = new DynamicControls(displayManager);
+            dynamicControls.ValuesChanged += DynamicControls_ValuesChanged;
+            LogMessage("DynamicControls created");
+
+            // Set up system tray icon
+            LogMessage("Setting up tray icon");
+            SetupTrayIcon();
+            LogMessage("Tray icon setup complete");
+            
+            // Load profiles and register hotkeys
+            LogMessage("Loading profiles to UI");
+            LoadProfilesToUI();
+            LogMessage("Profiles loaded");
+            
+            LogMessage("Registering hotkeys");
+            RegisterAllHotkeys();
+            LogMessage("Hotkeys registered");
+            
+            // Initialize dynamic controls
+            LogMessage("Initializing dynamic controls");
+            InitializeDynamicControls();
+            LogMessage("Dynamic controls initialized");
+            
+            // Load startup setting
+            UpdateStartWithWindowsCheckbox();
+            
+            // Load minimize to tray setting
+            LoadMinimizeToTraySetting();
+            
+            // Load dynamic controls enable state
+            LoadDynamicControlsState();
+            
+            LogMessage("Form1_Load completed successfully");
         }
         catch (Exception ex)
         {
-            LogMessage($"ERROR in Form1 constructor: {ex.Message}");
+            LogMessage($"ERROR in Form1_Load: {ex.Message}");
             LogMessage(ex.StackTrace);
             if (ex.InnerException != null)
             {
                 LogMessage($"Inner exception: {ex.InnerException.Message}");
                 LogMessage(ex.InnerException.StackTrace);
             }
-            MessageBox.Show($"Error initializing the application: {ex.Message}", "Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show($"Error loading the application: {ex.Message}", "Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
@@ -205,10 +241,20 @@ public partial class Form1 : Form
 
     protected override void WndProc(ref Message m)
     {
-        // Listen for hotkey messages
-        if (m.Msg == WM_HOTKEY && hotkeyManager != null)
+        if (m.Msg == WM_HOTKEY)
         {
-            hotkeyManager.ProcessHotkey(m.WParam);
+            // First check if it's a dynamic controls hotkey
+            if (dynamicControls != null && dynamicControls.ProcessHotkey(m.WParam))
+            {
+                // Hotkey was handled by dynamic controls
+                return;
+            }
+            
+            // If not, check if it's a profile hotkey
+            if (hotkeyManager != null)
+            {
+                hotkeyManager.ProcessHotkey(m.WParam);
+            }
         }
         
         base.WndProc(ref m);
@@ -932,4 +978,319 @@ public partial class Form1 : Form
             minimizeToTrayCheckBox.Checked = true;
         }
     }
+
+    #region Dynamic Controls Methods
+    
+    private void InitializeDynamicControls()
+    {
+        if (dynamicControls == null || displayManager == null)
+            return;
+            
+        // Set initial values
+        UpdateDynamicControlsUI();
+    }
+    
+    private void UpdateDynamicControlsUI()
+    {
+        if (dynamicControls == null || dynamicGammaTrackBar == null || dynamicContrastTrackBar == null || dynamicSettingsLabel == null)
+            return;
+            
+        // Update trackbars without triggering events
+        dynamicGammaTrackBar.ValueChanged -= dynamicGammaTrackBar_ValueChanged;
+        dynamicContrastTrackBar.ValueChanged -= dynamicContrastTrackBar_ValueChanged;
+        
+        dynamicGammaTrackBar.Value = (int)(dynamicControls.Gamma * 100);
+        dynamicContrastTrackBar.Value = (int)(dynamicControls.Contrast * 100);
+        
+        dynamicGammaTrackBar.ValueChanged += dynamicGammaTrackBar_ValueChanged;
+        dynamicContrastTrackBar.ValueChanged += dynamicContrastTrackBar_ValueChanged;
+        
+        // Update settings label
+        dynamicSettingsLabel.Text = $"Gamma: {dynamicControls.Gamma:F2}, Contrast: {dynamicControls.Contrast * 100:F0}%";
+    }
+    
+    private void DynamicControls_ValuesChanged(object? sender, EventArgs e)
+    {
+        // Update UI when values change from hotkeys
+        UpdateDynamicControlsUI();
+    }
+    
+    private void dynamicControlsToggle_CheckedChanged(object sender, EventArgs e)
+    {
+        if (dynamicControls == null || hotkeyManager == null || displayManager == null || trayIcon == null)
+            return;
+            
+        bool isEnabled = dynamicControlsToggle.Checked;
+        
+        try
+        {
+            LogMessage($"Dynamic controls toggled: {isEnabled}");
+            
+            dynamicControls.IsEnabled = isEnabled;
+            
+            if (isEnabled)
+            {
+                // Register hotkeys and apply current settings
+                dynamicControls.RegisterHotkeys(hotkeyManager, this.Handle);
+                dynamicControls.SetValues(dynamicControls.Gamma, dynamicControls.Contrast);
+                
+                // Disable profile controls while dynamic controls are active
+                profileListBox.Enabled = false;
+                addProfileButton.Enabled = false;
+                updateProfileButton.Enabled = false;
+                deleteProfileButton.Enabled = false;
+                setHotkeyButton.Enabled = false;
+                
+                // Disable tray menu profile selection
+                if (trayIcon.ContextMenuStrip != null)
+                {
+                    foreach (ToolStripItem item in trayIcon.ContextMenuStrip.Items)
+                    {
+                        if (item is ToolStripMenuItem menuItem && menuItem.Text == "Profiles")
+                        {
+                            menuItem.Enabled = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Unregister hotkeys
+                dynamicControls.UnregisterHotkeys(hotkeyManager);
+                
+                // Reset to current profile if one is selected
+                if (currentProfile != null)
+                {
+                    ApplyProfile(currentProfile);
+                }
+                else
+                {
+                    // Reset to default
+                    displayManager.ResetToDefault();
+                }
+                
+                // Re-enable profile controls
+                profileListBox.Enabled = true;
+                addProfileButton.Enabled = true;
+                updateProfileButton.Enabled = true;
+                deleteProfileButton.Enabled = true;
+                setHotkeyButton.Enabled = true;
+                
+                // Re-enable tray menu profile selection
+                if (trayIcon.ContextMenuStrip != null)
+                {
+                    foreach (ToolStripItem item in trayIcon.ContextMenuStrip.Items)
+                    {
+                        if (item is ToolStripMenuItem menuItem && menuItem.Text == "Profiles")
+                        {
+                            menuItem.Enabled = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Save the setting
+            SaveDynamicControlsState(isEnabled);
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"Error toggling dynamic controls: {ex.Message}");
+            MessageBox.Show($"Failed to toggle dynamic controls: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            
+            // Reset checkbox to previous state
+            dynamicControlsToggle.CheckedChanged -= dynamicControlsToggle_CheckedChanged;
+            dynamicControlsToggle.Checked = dynamicControls.IsEnabled;
+            dynamicControlsToggle.CheckedChanged += dynamicControlsToggle_CheckedChanged;
+        }
+    }
+    
+    private void dynamicGammaTrackBar_ValueChanged(object sender, EventArgs e)
+    {
+        if (dynamicControls == null || dynamicGammaTrackBar == null)
+            return;
+            
+        double gamma = dynamicGammaTrackBar.Value / 100.0;
+        dynamicControls.SetValues(gamma, dynamicControls.Contrast);
+        UpdateDynamicControlsUI();
+    }
+    
+    private void dynamicContrastTrackBar_ValueChanged(object sender, EventArgs e)
+    {
+        if (dynamicControls == null || dynamicContrastTrackBar == null)
+            return;
+            
+        double contrast = dynamicContrastTrackBar.Value / 100.0;
+        dynamicControls.SetValues(dynamicControls.Gamma, contrast);
+        UpdateDynamicControlsUI();
+    }
+    
+    private void dynamicControlsResetButton_Click(object sender, EventArgs e)
+    {
+        if (dynamicControls == null)
+            return;
+            
+        // Reset to default values
+        dynamicControls.SetValues(1.0, 0.5);
+        UpdateDynamicControlsUI();
+    }
+    
+    private void dynamicSaveToProfileButton_Click(object sender, EventArgs e)
+    {
+        if (dynamicControls == null || profileManager == null || !dynamicControls.IsEnabled)
+            return;
+            
+        // Create a new profile with current dynamic settings
+        double gamma = dynamicControls.Gamma;
+        double contrast = dynamicControls.Contrast;
+        
+        // Show input dialog for profile name
+        string name = "Dynamic Profile";
+        using (var form = new Form())
+        {
+            form.Text = "New Profile";
+            form.ClientSize = new Size(350, 100);
+            form.FormBorderStyle = FormBorderStyle.FixedDialog;
+            form.StartPosition = FormStartPosition.CenterParent;
+            form.MaximizeBox = false;
+            form.MinimizeBox = false;
+
+            Label label = new Label() { Left = 20, Top = 20, Text = "Profile Name:", AutoSize = true };
+            TextBox textBox = new TextBox() { Left = 120, Top = 20, Width = 200 };
+            textBox.Text = name;
+            
+            Button confirmButton = new Button() { Text = "OK", Left = 140, Width = 80, Top = 60, DialogResult = DialogResult.OK };
+            form.AcceptButton = confirmButton;
+            
+            form.Controls.Add(label);
+            form.Controls.Add(textBox);
+            form.Controls.Add(confirmButton);
+
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                name = textBox.Text.Trim();
+                if (string.IsNullOrEmpty(name))
+                {
+                    name = "Dynamic Profile";
+                }
+            }
+            else
+            {
+                return; // User canceled
+            }
+        }
+
+        Profile newProfile = new Profile(name, gamma, contrast);
+        profileManager.AddProfile(newProfile);
+        
+        // Refresh UI
+        LoadProfilesToUI();
+        
+        MessageBox.Show($"Dynamic settings saved as profile '{name}'", "Profile Saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+    
+    private void SaveDynamicControlsState(bool enabled)
+    {
+        LogMessage($"Saving Dynamic Controls state: {enabled}");
+        try
+        {
+            using (RegistryKey? key = Registry.CurrentUser.CreateSubKey(SettingsRegistryKey, true))
+            {
+                if (key == null)
+                {
+                    LogMessage("Failed to create/open registry key for settings");
+                    return;
+                }
+
+                key.SetValue(DynamicControlsEnabledValue, enabled ? 1 : 0, RegistryValueKind.DWord);
+                LogMessage($"Saved Dynamic Controls state: {enabled}");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"Registry error saving Dynamic Controls state: {ex.Message}");
+            throw;
+        }
+    }
+    
+    private void LoadDynamicControlsState()
+    {
+        if (dynamicControls == null || dynamicControlsToggle == null || trayIcon == null)
+            return;
+            
+        LogMessage("Loading Dynamic Controls state");
+        try
+        {
+            bool enabled = false;
+            
+            using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(SettingsRegistryKey, false))
+            {
+                if (key != null)
+                {
+                    object? value = key.GetValue(DynamicControlsEnabledValue);
+                    if (value != null)
+                    {
+                        enabled = Convert.ToInt32(value) != 0;
+                    }
+                }
+                else
+                {
+                    // Create the key for future use
+                    using (RegistryKey? newKey = Registry.CurrentUser.CreateSubKey(SettingsRegistryKey, true))
+                    {
+                        if (newKey != null)
+                        {
+                            newKey.SetValue(DynamicControlsEnabledValue, 0, RegistryValueKind.DWord);
+                        }
+                    }
+                }
+            }
+            
+            LogMessage($"Dynamic Controls state loaded: {enabled}");
+            
+            // Update checkbox and apply state
+            dynamicControlsToggle.CheckedChanged -= dynamicControlsToggle_CheckedChanged;
+            dynamicControlsToggle.Checked = enabled;
+            dynamicControls.IsEnabled = enabled;
+            
+            // Register hotkeys if enabled
+            if (enabled && hotkeyManager != null)
+            {
+                dynamicControls.RegisterHotkeys(hotkeyManager, this.Handle);
+                
+                // Disable profile controls
+                profileListBox.Enabled = false;
+                addProfileButton.Enabled = false;
+                updateProfileButton.Enabled = false;
+                deleteProfileButton.Enabled = false;
+                setHotkeyButton.Enabled = false;
+                
+                // Disable tray menu profile selection
+                if (trayIcon.ContextMenuStrip != null)
+                {
+                    foreach (ToolStripItem item in trayIcon.ContextMenuStrip.Items)
+                    {
+                        if (item is ToolStripMenuItem menuItem && menuItem.Text == "Profiles")
+                        {
+                            menuItem.Enabled = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            dynamicControlsToggle.CheckedChanged += dynamicControlsToggle_CheckedChanged;
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"Error loading Dynamic Controls state: {ex.Message}");
+            
+            // Default to disabled in case of error
+            dynamicControls.IsEnabled = false;
+            dynamicControlsToggle.Checked = false;
+        }
+    }
+    
+    #endregion
 }

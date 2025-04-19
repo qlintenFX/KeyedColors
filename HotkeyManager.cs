@@ -9,10 +9,10 @@ namespace KeyedColors
     {
         // Windows API for hotkeys
         [DllImport("user32.dll")]
-        private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
+        public static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
 
         [DllImport("user32.dll")]
-        private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+        public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
         // Modifier keys
         public const uint MOD_ALT = 0x0001;
@@ -31,6 +31,15 @@ namespace KeyedColors
         
         // Event for when a hotkey is pressed
         public event EventHandler<HotkeyEventArgs>? HotkeyPressed;
+
+        // Properties for DynamicControls
+        public int NextHotkeyId => nextHotkeyId;
+        public IntPtr FormHandle => formHandle;
+        
+        public void IncrementHotkeyId()
+        {
+            nextHotkeyId++;
+        }
 
         public HotkeyManager(IntPtr formHandle)
         {

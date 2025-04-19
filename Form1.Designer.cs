@@ -34,6 +34,7 @@ partial class Form1
         this.profileListBox = new System.Windows.Forms.ListBox();
         this.tabControl = new System.Windows.Forms.TabControl();
         this.profilesTab = new System.Windows.Forms.TabPage();
+        this.dynamicControlsTab = new System.Windows.Forms.TabPage();
         this.settingsTab = new System.Windows.Forms.TabPage();
         
         this.resetButton = new System.Windows.Forms.Button();
@@ -52,21 +53,36 @@ partial class Form1
         this.startWithWindowsCheckBox = new System.Windows.Forms.CheckBox();
         this.minimizeToTrayCheckBox = new System.Windows.Forms.CheckBox();
         
+        // Dynamic Controls tab controls
+        this.dynamicControlsToggle = new System.Windows.Forms.CheckBox();
+        this.dynamicGammaLabel = new System.Windows.Forms.Label();
+        this.dynamicContrastLabel = new System.Windows.Forms.Label();
+        this.dynamicSettingsLabel = new System.Windows.Forms.Label();
+        this.dynamicGammaTrackBar = new System.Windows.Forms.TrackBar();
+        this.dynamicContrastTrackBar = new System.Windows.Forms.TrackBar();
+        this.dynamicControlsResetButton = new System.Windows.Forms.Button();
+        this.dynamicControlsHelpLabel = new System.Windows.Forms.Label();
+        this.dynamicSaveToProfileButton = new System.Windows.Forms.Button();
+        
         this.tabControl.SuspendLayout();
         this.profilesTab.SuspendLayout();
+        this.dynamicControlsTab.SuspendLayout();
         this.settingsTab.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)(this.contrastTrackBar)).BeginInit();
         ((System.ComponentModel.ISupportInitialize)(this.gammaTrackBar)).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)(this.dynamicGammaTrackBar)).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)(this.dynamicContrastTrackBar)).BeginInit();
         this.SuspendLayout();
         
         // tabControl
         // 
         this.tabControl.Controls.Add(this.profilesTab);
+        this.tabControl.Controls.Add(this.dynamicControlsTab);
         this.tabControl.Controls.Add(this.settingsTab);
         this.tabControl.Location = new System.Drawing.Point(12, 12);
         this.tabControl.Name = "tabControl";
         this.tabControl.SelectedIndex = 0;
-        this.tabControl.Size = new System.Drawing.Size(459, 418);
+        this.tabControl.Size = new System.Drawing.Size(459, 458);
         this.tabControl.TabIndex = 0;
         
         // profilesTab
@@ -86,10 +102,119 @@ partial class Form1
         this.profilesTab.Location = new System.Drawing.Point(4, 24);
         this.profilesTab.Name = "profilesTab";
         this.profilesTab.Padding = new System.Windows.Forms.Padding(3);
-        this.profilesTab.Size = new System.Drawing.Size(451, 390);
+        this.profilesTab.Size = new System.Drawing.Size(451, 430);
         this.profilesTab.TabIndex = 0;
         this.profilesTab.Text = "Profiles";
         this.profilesTab.UseVisualStyleBackColor = true;
+        
+        // Dynamic Controls Tab
+        // 
+        this.dynamicControlsTab.Controls.Add(this.dynamicControlsToggle);
+        this.dynamicControlsTab.Controls.Add(this.dynamicGammaLabel);
+        this.dynamicControlsTab.Controls.Add(this.dynamicContrastLabel);
+        this.dynamicControlsTab.Controls.Add(this.dynamicSettingsLabel);
+        this.dynamicControlsTab.Controls.Add(this.dynamicGammaTrackBar);
+        this.dynamicControlsTab.Controls.Add(this.dynamicContrastTrackBar);
+        this.dynamicControlsTab.Controls.Add(this.dynamicControlsResetButton);
+        this.dynamicControlsTab.Controls.Add(this.dynamicControlsHelpLabel);
+        this.dynamicControlsTab.Controls.Add(this.dynamicSaveToProfileButton);
+        this.dynamicControlsTab.Location = new System.Drawing.Point(4, 24);
+        this.dynamicControlsTab.Name = "dynamicControlsTab";
+        this.dynamicControlsTab.Padding = new System.Windows.Forms.Padding(3);
+        this.dynamicControlsTab.Size = new System.Drawing.Size(451, 430);
+        this.dynamicControlsTab.TabIndex = 1;
+        this.dynamicControlsTab.Text = "Dynamic Controls";
+        this.dynamicControlsTab.UseVisualStyleBackColor = true;
+        
+        // dynamicControlsToggle
+        // 
+        this.dynamicControlsToggle.AutoSize = true;
+        this.dynamicControlsToggle.Location = new System.Drawing.Point(15, 20);
+        this.dynamicControlsToggle.Name = "dynamicControlsToggle";
+        this.dynamicControlsToggle.Size = new System.Drawing.Size(184, 19);
+        this.dynamicControlsToggle.TabIndex = 0;
+        this.dynamicControlsToggle.Text = "Enable Dynamic Controls";
+        this.dynamicControlsToggle.UseVisualStyleBackColor = true;
+        this.dynamicControlsToggle.CheckedChanged += new System.EventHandler(this.dynamicControlsToggle_CheckedChanged);
+        
+        // dynamicGammaLabel
+        // 
+        this.dynamicGammaLabel.AutoSize = true;
+        this.dynamicGammaLabel.Location = new System.Drawing.Point(15, 100);
+        this.dynamicGammaLabel.Name = "dynamicGammaLabel";
+        this.dynamicGammaLabel.Size = new System.Drawing.Size(52, 15);
+        this.dynamicGammaLabel.TabIndex = 1;
+        this.dynamicGammaLabel.Text = "Gamma:";
+        
+        // dynamicContrastLabel
+        // 
+        this.dynamicContrastLabel.AutoSize = true;
+        this.dynamicContrastLabel.Location = new System.Drawing.Point(15, 160);
+        this.dynamicContrastLabel.Name = "dynamicContrastLabel";
+        this.dynamicContrastLabel.Size = new System.Drawing.Size(55, 15);
+        this.dynamicContrastLabel.TabIndex = 2;
+        this.dynamicContrastLabel.Text = "Contrast:";
+        
+        // dynamicSettingsLabel
+        // 
+        this.dynamicSettingsLabel.AutoSize = true;
+        this.dynamicSettingsLabel.Location = new System.Drawing.Point(15, 220);
+        this.dynamicSettingsLabel.Name = "dynamicSettingsLabel";
+        this.dynamicSettingsLabel.Size = new System.Drawing.Size(165, 15);
+        this.dynamicSettingsLabel.TabIndex = 3;
+        this.dynamicSettingsLabel.Text = "Gamma: 1.00, Contrast: 50%";
+        
+        // dynamicGammaTrackBar
+        // 
+        this.dynamicGammaTrackBar.Location = new System.Drawing.Point(75, 100);
+        this.dynamicGammaTrackBar.Maximum = 280;
+        this.dynamicGammaTrackBar.Minimum = 30;
+        this.dynamicGammaTrackBar.Name = "dynamicGammaTrackBar";
+        this.dynamicGammaTrackBar.Size = new System.Drawing.Size(350, 45);
+        this.dynamicGammaTrackBar.TabIndex = 4;
+        this.dynamicGammaTrackBar.TickFrequency = 10;
+        this.dynamicGammaTrackBar.Value = 100;
+        this.dynamicGammaTrackBar.ValueChanged += new System.EventHandler(this.dynamicGammaTrackBar_ValueChanged);
+        
+        // dynamicContrastTrackBar
+        // 
+        this.dynamicContrastTrackBar.Location = new System.Drawing.Point(75, 160);
+        this.dynamicContrastTrackBar.Maximum = 100;
+        this.dynamicContrastTrackBar.Minimum = 0;
+        this.dynamicContrastTrackBar.Name = "dynamicContrastTrackBar";
+        this.dynamicContrastTrackBar.Size = new System.Drawing.Size(350, 45);
+        this.dynamicContrastTrackBar.TabIndex = 5;
+        this.dynamicContrastTrackBar.TickFrequency = 5;
+        this.dynamicContrastTrackBar.Value = 50;
+        this.dynamicContrastTrackBar.ValueChanged += new System.EventHandler(this.dynamicContrastTrackBar_ValueChanged);
+        
+        // dynamicControlsResetButton
+        // 
+        this.dynamicControlsResetButton.Location = new System.Drawing.Point(350, 220);
+        this.dynamicControlsResetButton.Name = "dynamicControlsResetButton";
+        this.dynamicControlsResetButton.Size = new System.Drawing.Size(75, 23);
+        this.dynamicControlsResetButton.TabIndex = 6;
+        this.dynamicControlsResetButton.Text = "Reset";
+        this.dynamicControlsResetButton.UseVisualStyleBackColor = true;
+        this.dynamicControlsResetButton.Click += new System.EventHandler(this.dynamicControlsResetButton_Click);
+        
+        // dynamicControlsHelpLabel
+        // 
+        this.dynamicControlsHelpLabel.Location = new System.Drawing.Point(15, 260);
+        this.dynamicControlsHelpLabel.Name = "dynamicControlsHelpLabel";
+        this.dynamicControlsHelpLabel.Size = new System.Drawing.Size(410, 100);
+        this.dynamicControlsHelpLabel.TabIndex = 7;
+        this.dynamicControlsHelpLabel.Text = "Use the following hotkeys to adjust settings:\r\n\r\nShift+Up/Down: Adjust Gamma\r\nShift+Left/Right: Adjust Contrast\r\n\r\nThe adjustments will be applied in real-time.";
+        
+        // dynamicSaveToProfileButton
+        // 
+        this.dynamicSaveToProfileButton.Location = new System.Drawing.Point(15, 385);
+        this.dynamicSaveToProfileButton.Name = "dynamicSaveToProfileButton";
+        this.dynamicSaveToProfileButton.Size = new System.Drawing.Size(140, 23);
+        this.dynamicSaveToProfileButton.TabIndex = 8;
+        this.dynamicSaveToProfileButton.Text = "Save as New Profile";
+        this.dynamicSaveToProfileButton.UseVisualStyleBackColor = true;
+        this.dynamicSaveToProfileButton.Click += new System.EventHandler(this.dynamicSaveToProfileButton_Click);
         
         // profileListBox
         // 
@@ -218,7 +343,7 @@ partial class Form1
         this.settingsTab.Location = new System.Drawing.Point(4, 24);
         this.settingsTab.Name = "settingsTab";
         this.settingsTab.Padding = new System.Windows.Forms.Padding(3);
-        this.settingsTab.Size = new System.Drawing.Size(451, 390);
+        this.settingsTab.Size = new System.Drawing.Size(451, 430);
         this.settingsTab.TabIndex = 2;
         this.settingsTab.Text = "Settings";
         this.settingsTab.UseVisualStyleBackColor = true;
@@ -249,7 +374,7 @@ partial class Form1
         // 
         this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
         this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-        this.ClientSize = new System.Drawing.Size(483, 442);
+        this.ClientSize = new System.Drawing.Size(483, 482);
         this.Controls.Add(this.tabControl);
         this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
         this.Icon = Properties.Resources.AppIcon;
@@ -260,10 +385,13 @@ partial class Form1
         this.tabControl.ResumeLayout(false);
         this.profilesTab.ResumeLayout(false);
         this.profilesTab.PerformLayout();
+        this.dynamicControlsTab.ResumeLayout(false);
         this.settingsTab.ResumeLayout(false);
         this.settingsTab.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)(this.contrastTrackBar)).EndInit();
         ((System.ComponentModel.ISupportInitialize)(this.gammaTrackBar)).EndInit();
+        ((System.ComponentModel.ISupportInitialize)(this.dynamicGammaTrackBar)).EndInit();
+        ((System.ComponentModel.ISupportInitialize)(this.dynamicContrastTrackBar)).EndInit();
         this.ResumeLayout(false);
     }
 
@@ -272,6 +400,7 @@ partial class Form1
     private System.Windows.Forms.ListBox profileListBox;
     private System.Windows.Forms.TabControl tabControl;
     private System.Windows.Forms.TabPage profilesTab;
+    private System.Windows.Forms.TabPage dynamicControlsTab;
     private System.Windows.Forms.TabPage settingsTab;
     private System.Windows.Forms.Button deleteProfileButton;
     private System.Windows.Forms.Button updateProfileButton;
@@ -286,4 +415,13 @@ partial class Form1
     private System.Windows.Forms.Button setHotkeyButton;
     private System.Windows.Forms.CheckBox startWithWindowsCheckBox;
     private System.Windows.Forms.CheckBox minimizeToTrayCheckBox;
+    private System.Windows.Forms.CheckBox dynamicControlsToggle;
+    private System.Windows.Forms.Label dynamicGammaLabel;
+    private System.Windows.Forms.Label dynamicContrastLabel;
+    private System.Windows.Forms.Label dynamicSettingsLabel;
+    private System.Windows.Forms.TrackBar dynamicGammaTrackBar;
+    private System.Windows.Forms.TrackBar dynamicContrastTrackBar;
+    private System.Windows.Forms.Button dynamicControlsResetButton;
+    private System.Windows.Forms.Label dynamicControlsHelpLabel;
+    private System.Windows.Forms.Button dynamicSaveToProfileButton;
 }

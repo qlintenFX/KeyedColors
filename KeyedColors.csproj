@@ -10,7 +10,7 @@
     <Description>Simple display profile manager with hotkey support</Description>
     <Company>KeyedColors</Company>
     <ApplicationIcon>logo.ico</ApplicationIcon>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <RuntimeIdentifiers>win-x64;win-x86</RuntimeIdentifiers>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
