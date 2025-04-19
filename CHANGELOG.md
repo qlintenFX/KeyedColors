@@ -2,7 +2,7 @@
 
 All notable changes to KeyedColors will be documented in this file.
 
-## [Unreleased]
+## [1.3.0]
 
 ### Added
 - Added Dynamic Controls feature for real-time adjustments with hotkeys:
