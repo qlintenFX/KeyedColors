@@ -2,6 +2,12 @@
 
 All notable changes to KeyedColors will be documented in this file.
 
+## [1.3.1] - 4-20-2025
+
+### Fixed
+- Fixed CultureNotFoundException that occurred when switching keyboard input languages
+- Changed InvariantGlobalization setting from true to false to support different cultures
+
 ## [1.3.0] - 4-19-2025
 
 ### Added

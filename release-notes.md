@@ -1,3 +1,20 @@
+# KeyedColors v1.3.1
+
+## What's New
+This release fixes a globalization issue that could cause exceptions when switching keyboard input languages.
+
+### Fixed
+- Fixed CultureNotFoundException that occurred when switching keyboard input languages
+- Changed application globalization settings to properly support different cultures and keyboard layouts
+
+## Installation
+Download and run the executable. No installation required.
+
+## Feedback
+Please report any issues or suggestions through GitHub issues.
+
+---
+
 # KeyedColors v1.3.0
 
 ## What's New

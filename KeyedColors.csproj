@@ -22,7 +22,7 @@
     <!-- Single-file specific options -->
     <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
     <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
-    <InvariantGlobalization>true</InvariantGlobalization>
+    <InvariantGlobalization>false</InvariantGlobalization>
     <!-- Publish readyToRun to optimize startup -->
     <PublishReadyToRun>true</PublishReadyToRun>
     <!-- Ensure all resources are embedded -->
