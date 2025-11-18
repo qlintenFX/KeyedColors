@@ -47,6 +47,8 @@ partial class Form1
         this.gammaLabel = new System.Windows.Forms.Label();
         this.contrastTrackBar = new System.Windows.Forms.TrackBar();
         this.gammaTrackBar = new System.Windows.Forms.TrackBar();
+        this.vibranceLabel = new System.Windows.Forms.Label();
+        this.vibranceTrackBar = new System.Windows.Forms.TrackBar();
         
         this.hotkeyLabel = new System.Windows.Forms.Label();
         this.setHotkeyButton = new System.Windows.Forms.Button();
@@ -61,9 +63,11 @@ partial class Form1
         this.dynamicControlsToggle = new System.Windows.Forms.CheckBox();
         this.dynamicGammaLabel = new System.Windows.Forms.Label();
         this.dynamicContrastLabel = new System.Windows.Forms.Label();
+        this.dynamicVibranceLabel = new System.Windows.Forms.Label();
         this.dynamicSettingsLabel = new System.Windows.Forms.Label();
         this.dynamicGammaTrackBar = new System.Windows.Forms.TrackBar();
         this.dynamicContrastTrackBar = new System.Windows.Forms.TrackBar();
+        this.dynamicVibranceTrackBar = new System.Windows.Forms.TrackBar();
         this.dynamicControlsResetButton = new System.Windows.Forms.Button();
         this.dynamicControlsHelpLabel = new System.Windows.Forms.Label();
         this.dynamicSaveToProfileButton = new System.Windows.Forms.Button();
@@ -74,8 +78,10 @@ partial class Form1
         this.settingsTab.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)(this.contrastTrackBar)).BeginInit();
         ((System.ComponentModel.ISupportInitialize)(this.gammaTrackBar)).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)(this.vibranceTrackBar)).BeginInit();
         ((System.ComponentModel.ISupportInitialize)(this.dynamicGammaTrackBar)).BeginInit();
         ((System.ComponentModel.ISupportInitialize)(this.dynamicContrastTrackBar)).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)(this.dynamicVibranceTrackBar)).BeginInit();
         this.SuspendLayout();
         
         // tabControl
@@ -93,8 +99,10 @@ partial class Form1
         // 
         this.profilesTab.Controls.Add(this.resetButton);
         this.profilesTab.Controls.Add(this.settingsLabel);
+        this.profilesTab.Controls.Add(this.vibranceLabel);
         this.profilesTab.Controls.Add(this.contrastLabel);
         this.profilesTab.Controls.Add(this.gammaLabel);
+        this.profilesTab.Controls.Add(this.vibranceTrackBar);
         this.profilesTab.Controls.Add(this.contrastTrackBar);
         this.profilesTab.Controls.Add(this.gammaTrackBar);
         this.profilesTab.Controls.Add(this.hotkeyLabel);
@@ -116,9 +124,11 @@ partial class Form1
         this.dynamicControlsTab.Controls.Add(this.dynamicControlsToggle);
         this.dynamicControlsTab.Controls.Add(this.dynamicGammaLabel);
         this.dynamicControlsTab.Controls.Add(this.dynamicContrastLabel);
+        this.dynamicControlsTab.Controls.Add(this.dynamicVibranceLabel);
         this.dynamicControlsTab.Controls.Add(this.dynamicSettingsLabel);
         this.dynamicControlsTab.Controls.Add(this.dynamicGammaTrackBar);
         this.dynamicControlsTab.Controls.Add(this.dynamicContrastTrackBar);
+        this.dynamicControlsTab.Controls.Add(this.dynamicVibranceTrackBar);
         this.dynamicControlsTab.Controls.Add(this.dynamicControlsResetButton);
         this.dynamicControlsTab.Controls.Add(this.dynamicControlsHelpLabel);
         this.dynamicControlsTab.Controls.Add(this.dynamicSaveToProfileButton);
@@ -159,14 +169,23 @@ partial class Form1
         this.dynamicContrastLabel.TabIndex = 2;
         this.dynamicContrastLabel.Text = "Contrast:";
         
+        // dynamicVibranceLabel
+        // 
+        this.dynamicVibranceLabel.AutoSize = true;
+        this.dynamicVibranceLabel.Location = new System.Drawing.Point(15, 220);
+        this.dynamicVibranceLabel.Name = "dynamicVibranceLabel";
+        this.dynamicVibranceLabel.Size = new System.Drawing.Size(58, 15);
+        this.dynamicVibranceLabel.TabIndex = 3;
+        this.dynamicVibranceLabel.Text = "Vibrance:";
+        
         // dynamicSettingsLabel
         // 
         this.dynamicSettingsLabel.AutoSize = true;
-        this.dynamicSettingsLabel.Location = new System.Drawing.Point(15, 220);
+        this.dynamicSettingsLabel.Location = new System.Drawing.Point(15, 280);
         this.dynamicSettingsLabel.Name = "dynamicSettingsLabel";
-        this.dynamicSettingsLabel.Size = new System.Drawing.Size(165, 15);
-        this.dynamicSettingsLabel.TabIndex = 3;
-        this.dynamicSettingsLabel.Text = "Gamma: 1.00, Contrast: 50%";
+        this.dynamicSettingsLabel.Size = new System.Drawing.Size(225, 15);
+        this.dynamicSettingsLabel.TabIndex = 7;
+        this.dynamicSettingsLabel.Text = "Gamma: 1.00, Contrast: 50%, Vibrance: 50%";
         
         // dynamicGammaTrackBar
         // 
@@ -191,31 +210,43 @@ partial class Form1
         this.dynamicContrastTrackBar.TickFrequency = 5;
         this.dynamicContrastTrackBar.Value = 50;
         this.dynamicContrastTrackBar.ValueChanged += new System.EventHandler(this.dynamicContrastTrackBar_ValueChanged);
+
+        // dynamicVibranceTrackBar
+        // 
+        this.dynamicVibranceTrackBar.Location = new System.Drawing.Point(75, 220);
+        this.dynamicVibranceTrackBar.Maximum = 100;
+        this.dynamicVibranceTrackBar.Minimum = 0;
+        this.dynamicVibranceTrackBar.Name = "dynamicVibranceTrackBar";
+        this.dynamicVibranceTrackBar.Size = new System.Drawing.Size(350, 45);
+        this.dynamicVibranceTrackBar.TabIndex = 6;
+        this.dynamicVibranceTrackBar.TickFrequency = 5;
+        this.dynamicVibranceTrackBar.Value = 50;
+        this.dynamicVibranceTrackBar.ValueChanged += new System.EventHandler(this.dynamicVibranceTrackBar_ValueChanged);
         
         // dynamicControlsResetButton
         // 
-        this.dynamicControlsResetButton.Location = new System.Drawing.Point(350, 220);
+        this.dynamicControlsResetButton.Location = new System.Drawing.Point(350, 280);
         this.dynamicControlsResetButton.Name = "dynamicControlsResetButton";
         this.dynamicControlsResetButton.Size = new System.Drawing.Size(75, 23);
-        this.dynamicControlsResetButton.TabIndex = 6;
+        this.dynamicControlsResetButton.TabIndex = 8;
         this.dynamicControlsResetButton.Text = "Reset";
         this.dynamicControlsResetButton.UseVisualStyleBackColor = true;
         this.dynamicControlsResetButton.Click += new System.EventHandler(this.dynamicControlsResetButton_Click);
         
         // dynamicControlsHelpLabel
         // 
-        this.dynamicControlsHelpLabel.Location = new System.Drawing.Point(15, 260);
+        this.dynamicControlsHelpLabel.Location = new System.Drawing.Point(15, 320);
         this.dynamicControlsHelpLabel.Name = "dynamicControlsHelpLabel";
         this.dynamicControlsHelpLabel.Size = new System.Drawing.Size(410, 100);
-        this.dynamicControlsHelpLabel.TabIndex = 7;
-        this.dynamicControlsHelpLabel.Text = "Use the following hotkeys to adjust settings:\r\n\r\nShift+Up/Down: Adjust Gamma\r\nShift+Left/Right: Adjust Contrast\r\n\r\nThe adjustments will be applied in real-time.";
+        this.dynamicControlsHelpLabel.TabIndex = 9;
+        this.dynamicControlsHelpLabel.Text = "Use the following hotkeys to adjust settings:\r\n\r\nShift+Up/Down: Adjust Gamma\r\nShift+Left/Right: Adjust Contrast\r\nShift+PageUp/PageDown: Adjust Vibrance\r\n\r\nThe adjustments will be applied in real-time.";
         
         // dynamicSaveToProfileButton
         // 
         this.dynamicSaveToProfileButton.Location = new System.Drawing.Point(15, 385);
         this.dynamicSaveToProfileButton.Name = "dynamicSaveToProfileButton";
         this.dynamicSaveToProfileButton.Size = new System.Drawing.Size(140, 23);
-        this.dynamicSaveToProfileButton.TabIndex = 8;
+        this.dynamicSaveToProfileButton.TabIndex = 10;
         this.dynamicSaveToProfileButton.Text = "Save as New Profile";
         this.dynamicSaveToProfileButton.UseVisualStyleBackColor = true;
         this.dynamicSaveToProfileButton.Click += new System.EventHandler(this.dynamicSaveToProfileButton_Click);
@@ -263,7 +294,7 @@ partial class Form1
         // 
         this.updateProfileButton.Location = new System.Drawing.Point(56, 172);
         this.updateProfileButton.Name = "updateProfileButton";
-        this.updateProfileButton.Size = new System.Drawing.Size(56, 23);
+        this.updateProfileButton.Size = new System.Drawing.Size(60, 23);
         this.updateProfileButton.TabIndex = 2;
         this.updateProfileButton.Text = "Update";
         this.updateProfileButton.UseVisualStyleBackColor = true;
@@ -281,10 +312,10 @@ partial class Form1
         
         // resetButton
         // 
-        this.resetButton.Location = new System.Drawing.Point(368, 350);
+        this.resetButton.Location = new System.Drawing.Point(368, 396);
         this.resetButton.Name = "resetButton";
         this.resetButton.Size = new System.Drawing.Size(75, 23);
-        this.resetButton.TabIndex = 11;
+        this.resetButton.TabIndex = 13;
         this.resetButton.Text = "Reset";
         this.resetButton.UseVisualStyleBackColor = true;
         this.resetButton.Click += new System.EventHandler(this.resetButton_Click);
@@ -292,11 +323,20 @@ partial class Form1
         // settingsLabel
         // 
         this.settingsLabel.AutoSize = true;
-        this.settingsLabel.Location = new System.Drawing.Point(6, 350);
+        this.settingsLabel.Location = new System.Drawing.Point(6, 396);
         this.settingsLabel.Name = "settingsLabel";
-        this.settingsLabel.Size = new System.Drawing.Size(165, 15);
-        this.settingsLabel.TabIndex = 10;
-        this.settingsLabel.Text = "Gamma: 1.0, Contrast: 1.0";
+        this.settingsLabel.Size = new System.Drawing.Size(225, 15);
+        this.settingsLabel.TabIndex = 12;
+        this.settingsLabel.Text = "Gamma: 1.0, Contrast: 1.0, Vibrance: 50%";
+        
+        // vibranceLabel
+        // 
+        this.vibranceLabel.AutoSize = true;
+        this.vibranceLabel.Location = new System.Drawing.Point(6, 356);
+        this.vibranceLabel.Name = "vibranceLabel";
+        this.vibranceLabel.Size = new System.Drawing.Size(58, 15);
+        this.vibranceLabel.TabIndex = 11;
+        this.vibranceLabel.Text = "Vibrance:";
         
         // contrastLabel
         // 
@@ -304,7 +344,7 @@ partial class Form1
         this.contrastLabel.Location = new System.Drawing.Point(6, 305);
         this.contrastLabel.Name = "contrastLabel";
         this.contrastLabel.Size = new System.Drawing.Size(55, 15);
-        this.contrastLabel.TabIndex = 9;
+        this.contrastLabel.TabIndex = 10;
         this.contrastLabel.Text = "Contrast:";
         
         // gammaLabel
@@ -313,8 +353,20 @@ partial class Form1
         this.gammaLabel.Location = new System.Drawing.Point(6, 254);
         this.gammaLabel.Name = "gammaLabel";
         this.gammaLabel.Size = new System.Drawing.Size(52, 15);
-        this.gammaLabel.TabIndex = 8;
+        this.gammaLabel.TabIndex = 9;
         this.gammaLabel.Text = "Gamma:";
+        
+        // vibranceTrackBar
+        // 
+        this.vibranceTrackBar.Location = new System.Drawing.Point(67, 356);
+        this.vibranceTrackBar.Maximum = 100;
+        this.vibranceTrackBar.Minimum = 0;
+        this.vibranceTrackBar.Name = "vibranceTrackBar";
+        this.vibranceTrackBar.Size = new System.Drawing.Size(376, 45);
+        this.vibranceTrackBar.TabIndex = 8;
+        this.vibranceTrackBar.TickFrequency = 5;
+        this.vibranceTrackBar.Value = 50;
+        this.vibranceTrackBar.ValueChanged += new System.EventHandler(this.vibranceTrackBar_ValueChanged);
         
         // contrastTrackBar
         // 
@@ -394,8 +446,10 @@ partial class Form1
         this.settingsTab.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)(this.contrastTrackBar)).EndInit();
         ((System.ComponentModel.ISupportInitialize)(this.gammaTrackBar)).EndInit();
+        ((System.ComponentModel.ISupportInitialize)(this.vibranceTrackBar)).EndInit();
         ((System.ComponentModel.ISupportInitialize)(this.dynamicGammaTrackBar)).EndInit();
         ((System.ComponentModel.ISupportInitialize)(this.dynamicContrastTrackBar)).EndInit();
+        ((System.ComponentModel.ISupportInitialize)(this.dynamicVibranceTrackBar)).EndInit();
         this.ResumeLayout(false);
     }
 
@@ -413,6 +467,8 @@ partial class Form1
     private System.Windows.Forms.Label gammaLabel;
     private System.Windows.Forms.TrackBar contrastTrackBar;
     private System.Windows.Forms.TrackBar gammaTrackBar;
+    private System.Windows.Forms.Label vibranceLabel;
+    private System.Windows.Forms.TrackBar vibranceTrackBar;
     private System.Windows.Forms.Label settingsLabel;
     private System.Windows.Forms.Button resetButton;
     private System.Windows.Forms.Label hotkeyLabel;
@@ -422,9 +478,11 @@ partial class Form1
     private System.Windows.Forms.CheckBox dynamicControlsToggle;
     private System.Windows.Forms.Label dynamicGammaLabel;
     private System.Windows.Forms.Label dynamicContrastLabel;
+    private System.Windows.Forms.Label dynamicVibranceLabel;
     private System.Windows.Forms.Label dynamicSettingsLabel;
     private System.Windows.Forms.TrackBar dynamicGammaTrackBar;
     private System.Windows.Forms.TrackBar dynamicContrastTrackBar;
+    private System.Windows.Forms.TrackBar dynamicVibranceTrackBar;
     private System.Windows.Forms.Button dynamicControlsResetButton;
     private System.Windows.Forms.Label dynamicControlsHelpLabel;
     private System.Windows.Forms.Button dynamicSaveToProfileButton;

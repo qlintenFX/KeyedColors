@@ -8,10 +8,12 @@ namespace KeyedColors
         // Constants for adjustment steps
         public const double GAMMA_STEP = 0.05;
         public const double CONTRAST_STEP = 0.05;
+        public const int VIBRANCE_STEP = 5;
         
         // Properties for current values
         public double Gamma { get; private set; }
         public double Contrast { get; private set; }
+        public int Vibrance { get; private set; }
         public bool IsEnabled { get; set; }
         
         // Event for when values change
@@ -25,6 +27,8 @@ namespace KeyedColors
         public int HotkeyIdGammaDown { get; private set; } = -1;
         public int HotkeyIdContrastUp { get; private set; } = -1;
         public int HotkeyIdContrastDown { get; private set; } = -1;
+        public int HotkeyIdVibranceUp { get; private set; } = -1;
+        public int HotkeyIdVibranceDown { get; private set; } = -1;
         
         // Registry key for saving settings
         private const string SettingsRegistryKey = @"SOFTWARE\KeyedColors";
@@ -37,6 +41,7 @@ namespace KeyedColors
             // Initialize with default values
             Gamma = 1.0;
             Contrast = 0.5;
+            Vibrance = 50;
             IsEnabled = false;
         }
         
@@ -79,15 +84,19 @@ namespace KeyedColors
         {
             if (IsEnabled)
             {
-                displayManager.ApplySettings(Gamma, Contrast);
+                displayManager.ApplySettings(Gamma, Contrast, Vibrance);
             }
         }
         
         // Set initial values (e.g., from a profile)
-        public void SetValues(double gamma, double contrast)
+        public void SetValues(double gamma, double contrast, int? vibrance = null)
         {
             Gamma = Math.Max(0.3, Math.Min(2.8, gamma));
             Contrast = Math.Max(0, Math.Min(1, contrast));
+            if (vibrance.HasValue)
+            {
+                Vibrance = Math.Max(0, Math.Min(100, vibrance.Value));
+            }
             
             if (IsEnabled)
             {
@@ -110,6 +119,8 @@ namespace KeyedColors
             HotkeyIdGammaDown = RegisterDynamicHotkey(hotkeyManager, formHandle, Keys.Down, modifiers);
             HotkeyIdContrastUp = RegisterDynamicHotkey(hotkeyManager, formHandle, Keys.Right, modifiers);
             HotkeyIdContrastDown = RegisterDynamicHotkey(hotkeyManager, formHandle, Keys.Left, modifiers);
+            HotkeyIdVibranceUp = RegisterDynamicHotkey(hotkeyManager, formHandle, Keys.PageUp, modifiers);
+            HotkeyIdVibranceDown = RegisterDynamicHotkey(hotkeyManager, formHandle, Keys.PageDown, modifiers);
         }
         
         private int RegisterDynamicHotkey(HotkeyManager hotkeyManager, IntPtr formHandle, Keys key, uint modifiers)
@@ -150,6 +161,18 @@ namespace KeyedColors
                 HotkeyManager.UnregisterHotKey(hotkeyManager.FormHandle, HotkeyIdContrastDown);
                 HotkeyIdContrastDown = -1;
             }
+
+            if (HotkeyIdVibranceUp > 0)
+            {
+                HotkeyManager.UnregisterHotKey(hotkeyManager.FormHandle, HotkeyIdVibranceUp);
+                HotkeyIdVibranceUp = -1;
+            }
+
+            if (HotkeyIdVibranceDown > 0)
+            {
+                HotkeyManager.UnregisterHotKey(hotkeyManager.FormHandle, HotkeyIdVibranceDown);
+                HotkeyIdVibranceDown = -1;
+            }
         }
         
         // Process a hotkey message
@@ -179,8 +202,33 @@ namespace KeyedColors
                 AdjustContrast(-CONTRAST_STEP);
                 return true;
             }
+            else if (id == HotkeyIdVibranceUp)
+            {
+                AdjustVibrance(VIBRANCE_STEP);
+                return true;
+            }
+            else if (id == HotkeyIdVibranceDown)
+            {
+                AdjustVibrance(-VIBRANCE_STEP);
+                return true;
+            }
             
             return false;
+        }
+
+        // Adjust vibrance value
+        public void AdjustVibrance(int delta)
+        {
+            if (!IsEnabled) return;
+            int newValue = Vibrance + delta;
+            newValue = Math.Max(0, Math.Min(100, newValue));
+
+            if (newValue != Vibrance)
+            {
+                Vibrance = newValue;
+                ApplySettings();
+                ValuesChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
     }
 } 

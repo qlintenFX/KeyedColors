@@ -117,9 +117,9 @@ namespace KeyedColors
             // Create default presets
             profiles = new List<Profile>
             {
-                new Profile("Default", 1.0, 0.5),
-                new Profile("Dark", 0.8, 0.5),
-                new Profile("Night Vision", 2.8, 0.6)
+                new Profile("Default", 1.0, 0.5, 50),
+                new Profile("Dark", 0.8, 0.5, 50),
+                new Profile("Night Vision", 2.8, 0.6, 65)
             };
             
             SaveProfiles();

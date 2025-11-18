@@ -1,3 +1,24 @@
+# KeyedColors v1.4.0 (Unreleased)
+
+## What's New
+Lays the foundation for GPU-level vibrance control and exposes the UI so profiles can capture the new setting.
+
+### Added
+- New vibrance slider on the Profiles tab; values save with each profile and hotkey
+- Dynamic Controls now include a vibrance slider plus Shift+PageUp/PageDown hotkeys
+- Extensible vibrance service abstraction that will host vendor APIs (NVAPI/ADL/Intel) in upcoming builds
+
+### Known Limitations
+- The vibrance slider is currently metadata-only until vendor integrations land; gamma and contrast behavior is unchanged
+
+## Installation
+Download and run the executable. No installation required.
+
+## Feedback
+Please report any issues or suggestions through GitHub issues.
+
+---
+
 # KeyedColors v1.3.1
 
 ## What's New
