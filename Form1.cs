@@ -49,7 +49,8 @@ public partial class Form1 : Form
             LogMessage("ProfileManager created");
             
             LogMessage("Creating DisplayManager");
-            displayManager = new DisplayManager();
+            IVibranceService vibranceService = VibranceServiceFactory.Create();
+            displayManager = new DisplayManager(vibranceService);
             LogMessage("DisplayManager created");
             
             LogMessage("Creating HotkeyManager");
@@ -192,7 +193,12 @@ public partial class Form1 : Form
         }
         
         hotkeyManager?.UnregisterAllHotkeys();
-        displayManager?.ResetToDefault();
+        if (displayManager != null)
+        {
+            displayManager.ResetToDefault();
+            displayManager.Dispose();
+            displayManager = null;
+        }
 
         if (trayIcon != null)
         {
@@ -478,7 +484,8 @@ public partial class Form1 : Form
         if (profile != null && displayManager != null)
         {
             currentProfile = profile;
-            displayManager.ApplySettings(profile.Gamma, profile.Contrast);
+            int clampedVibrance = Math.Max(0, Math.Min(100, profile.Vibrance));
+            displayManager.ApplySettings(profile.Gamma, profile.Contrast, clampedVibrance);
             
             // Update UI if form is visible
             if (!isMinimized)
@@ -490,10 +497,11 @@ public partial class Form1 : Form
                 }
                 
                 // Update sliders
-                if (gammaTrackBar != null && contrastTrackBar != null)
+                if (gammaTrackBar != null && contrastTrackBar != null && vibranceTrackBar != null)
                 {
                     gammaTrackBar.Value = (int)(profile.Gamma * 100);
                     contrastTrackBar.Value = (int)(profile.Contrast * 100);
+                    vibranceTrackBar.Value = clampedVibrance;
                 }
                 
                 // Update label
@@ -504,12 +512,13 @@ public partial class Form1 : Form
 
     private void UpdateSettingsLabel()
     {
-        if (gammaTrackBar != null && contrastTrackBar != null && settingsLabel != null)
+        if (gammaTrackBar != null && contrastTrackBar != null && vibranceTrackBar != null && settingsLabel != null)
         {
             double gamma = gammaTrackBar.Value / 100.0;
             double contrast = contrastTrackBar.Value;
+            double vibrance = vibranceTrackBar.Value;
             
-            settingsLabel.Text = $"Gamma: {gamma:F2}, Contrast: {contrast}%";
+            settingsLabel.Text = $"Gamma: {gamma:F2}, Contrast: {contrast:F0}%, Vibrance: {vibrance:F0}%";
         }
     }
 
@@ -518,11 +527,11 @@ public partial class Form1 : Form
         UpdateSettingsLabel();
         
         // Apply settings immediately for preview
-        if (displayManager != null && gammaTrackBar != null && contrastTrackBar != null)
+        if (displayManager != null && gammaTrackBar != null && contrastTrackBar != null && vibranceTrackBar != null)
         {
             double gamma = gammaTrackBar.Value / 100.0;
             double contrast = contrastTrackBar.Value / 100.0;
-            displayManager.ApplySettings(gamma, contrast);
+            displayManager.ApplySettings(gamma, contrast, vibranceTrackBar.Value);
         }
     }
 
@@ -531,11 +540,23 @@ public partial class Form1 : Form
         UpdateSettingsLabel();
         
         // Apply settings immediately for preview
-        if (displayManager != null && gammaTrackBar != null && contrastTrackBar != null)
+        if (displayManager != null && gammaTrackBar != null && contrastTrackBar != null && vibranceTrackBar != null)
         {
             double gamma = gammaTrackBar.Value / 100.0;
             double contrast = contrastTrackBar.Value / 100.0;
-            displayManager.ApplySettings(gamma, contrast);
+            displayManager.ApplySettings(gamma, contrast, vibranceTrackBar.Value);
+        }
+    }
+
+    private void vibranceTrackBar_ValueChanged(object? sender, EventArgs e)
+    {
+        UpdateSettingsLabel();
+
+        if (displayManager != null && gammaTrackBar != null && contrastTrackBar != null && vibranceTrackBar != null)
+        {
+            double gamma = gammaTrackBar.Value / 100.0;
+            double contrast = contrastTrackBar.Value / 100.0;
+            displayManager.ApplySettings(gamma, contrast, vibranceTrackBar.Value);
         }
     }
 
@@ -546,6 +567,11 @@ public partial class Form1 : Form
             // Update UI with selected profile settings
             gammaTrackBar.Value = (int)(selectedProfile.Gamma * 100);
             contrastTrackBar.Value = (int)(selectedProfile.Contrast * 100);
+            if (vibranceTrackBar != null)
+            {
+                int vibrance = Math.Max(0, Math.Min(100, selectedProfile.Vibrance));
+                vibranceTrackBar.Value = vibrance;
+            }
             
             // Update hotkey display
             string hotkeyText = selectedProfile.HotKey != Keys.None ?
@@ -561,12 +587,13 @@ public partial class Form1 : Form
 
     private void addProfileButton_Click(object? sender, EventArgs e)
     {
-        if (profileManager == null || gammaTrackBar == null || contrastTrackBar == null)
+        if (profileManager == null || gammaTrackBar == null || contrastTrackBar == null || vibranceTrackBar == null)
             return;
             
         // Create a new profile with current settings
         double gamma = gammaTrackBar.Value / 100.0;
         double contrast = contrastTrackBar.Value / 100.0;
+        int vibrance = vibranceTrackBar.Value;
         
         string name = "New Profile";
         
@@ -605,7 +632,7 @@ public partial class Form1 : Form
             }
         }
 
-        Profile newProfile = new Profile(name, gamma, contrast);
+        Profile newProfile = new Profile(name, gamma, contrast, vibrance);
         profileManager.AddProfile(newProfile);
         
         // Refresh UI
@@ -616,7 +643,7 @@ public partial class Form1 : Form
     private void updateProfileButton_Click(object? sender, EventArgs e)
     {
         if (profileManager == null || profileListBox == null || 
-            gammaTrackBar == null || contrastTrackBar == null)
+            gammaTrackBar == null || contrastTrackBar == null || vibranceTrackBar == null)
             return;
             
         if (profileListBox.SelectedItem is Profile selectedProfile)
@@ -624,6 +651,7 @@ public partial class Form1 : Form
             // Update the selected profile with current settings
             selectedProfile.Gamma = gammaTrackBar.Value / 100.0;
             selectedProfile.Contrast = contrastTrackBar.Value / 100.0;
+            selectedProfile.Vibrance = vibranceTrackBar.Value;
             
             profileManager.SaveProfiles();
             
@@ -765,13 +793,14 @@ public partial class Form1 : Form
     private void resetButton_Click(object? sender, EventArgs e)
     {
         // Reset display to default settings
-        if (displayManager != null && gammaTrackBar != null && contrastTrackBar != null)
+        if (displayManager != null && gammaTrackBar != null && contrastTrackBar != null && vibranceTrackBar != null)
         {
             displayManager.ResetToDefault();
             
             // Update UI to show default values
             gammaTrackBar.Value = 100;
             contrastTrackBar.Value = 50;
+            vibranceTrackBar.Value = 50;
             UpdateSettingsLabel();
         }
     }
@@ -977,21 +1006,24 @@ public partial class Form1 : Form
     
     private void UpdateDynamicControlsUI()
     {
-        if (dynamicControls == null || dynamicGammaTrackBar == null || dynamicContrastTrackBar == null || dynamicSettingsLabel == null)
+        if (dynamicControls == null || dynamicGammaTrackBar == null || dynamicContrastTrackBar == null || dynamicVibranceTrackBar == null || dynamicSettingsLabel == null)
             return;
             
         // Update trackbars without triggering events
         dynamicGammaTrackBar.ValueChanged -= dynamicGammaTrackBar_ValueChanged;
         dynamicContrastTrackBar.ValueChanged -= dynamicContrastTrackBar_ValueChanged;
+        dynamicVibranceTrackBar.ValueChanged -= dynamicVibranceTrackBar_ValueChanged;
         
         dynamicGammaTrackBar.Value = (int)(dynamicControls.Gamma * 100);
         dynamicContrastTrackBar.Value = (int)(dynamicControls.Contrast * 100);
+        dynamicVibranceTrackBar.Value = dynamicControls.Vibrance;
         
         dynamicGammaTrackBar.ValueChanged += dynamicGammaTrackBar_ValueChanged;
         dynamicContrastTrackBar.ValueChanged += dynamicContrastTrackBar_ValueChanged;
+        dynamicVibranceTrackBar.ValueChanged += dynamicVibranceTrackBar_ValueChanged;
         
         // Update settings label
-        dynamicSettingsLabel.Text = $"Gamma: {dynamicControls.Gamma:F2}, Contrast: {dynamicControls.Contrast * 100:F0}%";
+        dynamicSettingsLabel.Text = $"Gamma: {dynamicControls.Gamma:F2}, Contrast: {dynamicControls.Contrast * 100:F0}%, Vibrance: {dynamicControls.Vibrance}%";
     }
     
     private void DynamicControls_ValuesChanged(object? sender, EventArgs e)
@@ -1017,7 +1049,7 @@ public partial class Form1 : Form
             {
                 // Register hotkeys and apply current settings
                 dynamicControls.RegisterHotkeys(hotkeyManager, this.Handle);
-                dynamicControls.SetValues(dynamicControls.Gamma, dynamicControls.Contrast);
+                dynamicControls.SetValues(dynamicControls.Gamma, dynamicControls.Contrast, dynamicControls.Vibrance);
                 
                 // Disable profile controls while dynamic controls are active
                 profileListBox.Enabled = false;
@@ -1046,6 +1078,13 @@ public partial class Form1 : Form
                 {
                     // Reset to default
                     displayManager.ResetToDefault();
+                    if (gammaTrackBar != null && contrastTrackBar != null && vibranceTrackBar != null)
+                    {
+                        gammaTrackBar.Value = 100;
+                        contrastTrackBar.Value = 50;
+                        vibranceTrackBar.Value = 50;
+                        UpdateSettingsLabel();
+                    }
                 }
                 
                 // Re-enable profile controls
@@ -1087,7 +1126,7 @@ public partial class Form1 : Form
             return;
             
         double gamma = dynamicGammaTrackBar.Value / 100.0;
-        dynamicControls.SetValues(gamma, dynamicControls.Contrast);
+        dynamicControls.SetValues(gamma, dynamicControls.Contrast, dynamicControls.Vibrance);
         UpdateDynamicControlsUI();
     }
     
@@ -1097,7 +1136,17 @@ public partial class Form1 : Form
             return;
             
         double contrast = dynamicContrastTrackBar.Value / 100.0;
-        dynamicControls.SetValues(dynamicControls.Gamma, contrast);
+        dynamicControls.SetValues(dynamicControls.Gamma, contrast, dynamicControls.Vibrance);
+        UpdateDynamicControlsUI();
+    }
+
+    private void dynamicVibranceTrackBar_ValueChanged(object? sender, EventArgs e)
+    {
+        if (dynamicControls == null || dynamicVibranceTrackBar == null)
+            return;
+
+        int vibrance = dynamicVibranceTrackBar.Value;
+        dynamicControls.SetValues(dynamicControls.Gamma, dynamicControls.Contrast, vibrance);
         UpdateDynamicControlsUI();
     }
     
@@ -1107,7 +1156,7 @@ public partial class Form1 : Form
             return;
             
         // Reset to default values
-        dynamicControls.SetValues(1.0, 0.5);
+        dynamicControls.SetValues(1.0, 0.5, 50);
         UpdateDynamicControlsUI();
     }
     
@@ -1119,6 +1168,7 @@ public partial class Form1 : Form
         // Create a new profile with current dynamic settings
         double gamma = dynamicControls.Gamma;
         double contrast = dynamicControls.Contrast;
+        int vibrance = dynamicControls.Vibrance;
         
         // Show input dialog for profile name
         string name = "Dynamic Profile";
@@ -1156,7 +1206,7 @@ public partial class Form1 : Form
             }
         }
 
-        Profile newProfile = new Profile(name, gamma, contrast);
+        Profile newProfile = new Profile(name, gamma, contrast, vibrance);
         profileManager.AddProfile(newProfile);
         
         // Refresh UI
@@ -1233,6 +1283,7 @@ public partial class Form1 : Form
             if (enabled && hotkeyManager != null)
             {
                 dynamicControls.RegisterHotkeys(hotkeyManager, this.Handle);
+                dynamicControls.SetValues(dynamicControls.Gamma, dynamicControls.Contrast, dynamicControls.Vibrance);
                 
                 // Disable profile controls
                 profileListBox.Enabled = false;

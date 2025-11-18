@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace KeyedColors
 {
-    public class DisplayManager
+    public class DisplayManager : IDisposable
     {
         // Windows API declarations
         [DllImport("gdi32.dll")]
@@ -38,11 +38,15 @@ namespace KeyedColors
         private RAMP originalRamp;
         private bool hasOriginalRamp = false;
         private bool apiAvailable = true;
+        private readonly IVibranceService vibranceService;
 
         public bool IsApiAvailable => apiAvailable;
+        public IVibranceService VibranceService => vibranceService;
 
-        public DisplayManager()
+        public DisplayManager(IVibranceService? vibranceService = null)
         {
+            this.vibranceService = vibranceService ?? NullVibranceService.Instance;
+
             try
             {
                 // Initialize the original ramp values
@@ -88,7 +92,7 @@ namespace KeyedColors
         }
 
         // Apply gamma and contrast settings
-        public bool ApplySettings(double gamma, double contrast)
+        public bool ApplySettings(double gamma, double contrast, int? vibrance = null)
         {
             if (!apiAvailable)
                 return false;
@@ -136,12 +140,23 @@ namespace KeyedColors
                     ReleaseDC(IntPtr.Zero, hDC);
                 }
 
+                if (success && vibrance.HasValue)
+                {
+                    // Don't fail the entire operation if vibrance is unsupported.
+                    vibranceService.ApplyVibrance(ClampVibrance(vibrance.Value));
+                }
+
                 return success;
             }
             catch (Exception)
             {
                 return false;
             }
+        }
+
+        public bool ApplyVibrance(int vibrance)
+        {
+            return vibranceService.ApplyVibrance(ClampVibrance(vibrance));
         }
 
         // Reset to original settings
@@ -161,12 +176,32 @@ namespace KeyedColors
                     ReleaseDC(IntPtr.Zero, hDC);
                 }
 
+                vibranceService.ResetVibrance();
+
                 return success;
             }
             catch (Exception)
             {
                 return false;
             }
+        }
+
+        private int ClampVibrance(int value)
+        {
+            int min = vibranceService.MinValue;
+            int max = vibranceService.MaxValue;
+            if (min > max)
+            {
+                // Defensive fallback in case an implementation mis-reports bounds.
+                (min, max) = (0, 100);
+            }
+
+            return Math.Max(min, Math.Min(max, value));
+        }
+
+        public void Dispose()
+        {
+            vibranceService.Dispose();
         }
     }
 } 
