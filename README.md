@@ -52,7 +52,7 @@ A simple Windows application that allows users to create custom display profiles
 ## Requirements
 
 - Windows 10 or later
-- .NET 6.0 Runtime or later
+- .NET 8.0 Desktop Runtime or later
 
 ## Building from Source
 

@@ -16,9 +16,11 @@ public partial class Form1 : Form
     private HotkeyManager? hotkeyManager;
     private DynamicControls? dynamicControls;
     private NotifyIcon? trayIcon;
+    private ToolStripMenuItem? trayProfilesMenu;
     private Profile? currentProfile;
     private bool isMinimized = false;
     private string logPath;
+    private bool resourcesCleaned;
     private const string StartupRegistryKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
     private const string ApplicationName = "KeyedColors";
     private const string SettingsRegistryKey = @"SOFTWARE\KeyedColors";
@@ -88,57 +90,11 @@ public partial class Form1 : Form
             // Load dynamic controls enable state
             LoadDynamicControlsState();
             
-            LogMessage("Form1_Load completed successfully");
+            LogMessage("Form initialization completed successfully");
         }
         catch (Exception ex)
         {
-            LogMessage($"ERROR in Form1_Load: {ex.Message}");
-            LogMessage(ex.StackTrace);
-            if (ex.InnerException != null)
-            {
-                LogMessage($"Inner exception: {ex.InnerException.Message}");
-                LogMessage(ex.InnerException.StackTrace);
-            }
-            MessageBox.Show($"Error loading the application: {ex.Message}", "Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-    }
-
-    private void Form1_Load(object? sender, EventArgs e)
-    {
-        LogMessage("Form1_Load started");
-        try
-        {
-            // Initialize the hotkey manager after the form is loaded (handle is available)
-            LogMessage("Creating HotkeyManager");
-            hotkeyManager = new HotkeyManager(this.Handle);
-            hotkeyManager.HotkeyPressed += HotkeyManager_HotkeyPressed;
-            LogMessage("HotkeyManager created");
-
-            // Set up tray icon
-            LogMessage("Setting up tray icon");
-            SetupTrayIcon();
-            LogMessage("Tray icon setup completed");
-
-            // Load profiles and register hotkeys
-            LogMessage("Loading profiles to UI");
-            LoadProfilesToUI();
-            LogMessage("Profiles loaded");
-            
-            LogMessage("Registering hotkeys");
-            RegisterAllHotkeys();
-            LogMessage("Hotkeys registered");
-            
-            // Load startup setting
-            UpdateStartWithWindowsCheckbox();
-            
-            // Load minimize to tray setting
-            LoadMinimizeToTraySetting();
-            
-            LogMessage("Form1_Load completed successfully");
-        }
-        catch (Exception ex)
-        {
-            LogMessage($"ERROR in Form1_Load: {ex.Message}");
+            LogMessage($"ERROR during Form initialization: {ex.Message}");
             LogMessage(ex.StackTrace);
             if (ex.InnerException != null)
             {
@@ -223,20 +179,30 @@ public partial class Form1 : Form
         return potentialPaths[0];
     }
 
-    private void Form1_FormClosing(object? sender, FormClosingEventArgs e)
+    private void CleanupResources()
     {
-        // Unregister all hotkeys
+        if (resourcesCleaned)
+        {
+            return;
+        }
+
+        if (dynamicControls != null && hotkeyManager != null)
+        {
+            dynamicControls.UnregisterHotkeys(hotkeyManager);
+        }
+        
         hotkeyManager?.UnregisterAllHotkeys();
-        
-        // Reset display settings to original
         displayManager?.ResetToDefault();
-        
-        // Clean up tray icon
+
         if (trayIcon != null)
         {
             trayIcon.Visible = false;
             trayIcon.Dispose();
+            trayIcon = null;
         }
+
+        trayProfilesMenu = null;
+        resourcesCleaned = true;
     }
 
     protected override void WndProc(ref Message m)
@@ -358,9 +324,9 @@ public partial class Form1 : Form
             ContextMenuStrip menu = new ContextMenuStrip();
             
             // Add profiles submenu
-            ToolStripMenuItem profilesMenu = new ToolStripMenuItem("Profiles");
-            menu.Items.Add(profilesMenu);
-            UpdateTrayProfilesMenu(profilesMenu);
+            trayProfilesMenu = new ToolStripMenuItem("Profiles");
+            menu.Items.Add(trayProfilesMenu);
+            UpdateTrayProfilesMenu();
 
             // Add other menu items
             menu.Items.Add(new ToolStripSeparator());
@@ -387,6 +353,10 @@ public partial class Form1 : Form
                 };
                 
                 ContextMenuStrip menu = new ContextMenuStrip();
+                trayProfilesMenu = new ToolStripMenuItem("Profiles");
+                menu.Items.Add(trayProfilesMenu);
+                UpdateTrayProfilesMenu();
+                menu.Items.Add(new ToolStripSeparator());
                 menu.Items.Add("Show", null, ShowForm_Click);
                 menu.Items.Add("Exit", null, Exit_Click);
                 trayIcon.ContextMenuStrip = menu;
@@ -402,17 +372,20 @@ public partial class Form1 : Form
         }
     }
 
-    private void UpdateTrayProfilesMenu(ToolStripMenuItem profilesMenu)
+    private void UpdateTrayProfilesMenu()
     {
-        if (profileManager == null)
+        if (profileManager == null || trayProfilesMenu == null)
             return;
             
-        profilesMenu.DropDownItems.Clear();
+        trayProfilesMenu.DropDownItems.Clear();
+        trayProfilesMenu.Enabled = dynamicControls == null || !dynamicControls.IsEnabled;
         
         foreach (Profile profile in profileManager.Profiles)
         {
-            ToolStripMenuItem item = new ToolStripMenuItem(profile.Name);
-            item.Tag = profile;
+            ToolStripMenuItem item = new ToolStripMenuItem(profile.Name)
+            {
+                Tag = profile
+            };
             item.Click += (s, e) => 
             {
                 if (s is ToolStripMenuItem menuItem && menuItem.Tag is Profile selectedProfile)
@@ -420,7 +393,7 @@ public partial class Form1 : Form
                     ApplyProfile(selectedProfile);
                 }
             };
-            profilesMenu.DropDownItems.Add(item);
+            trayProfilesMenu.DropDownItems.Add(item);
         }
     }
 
@@ -459,6 +432,8 @@ public partial class Form1 : Form
         {
             profileListBox.SelectedIndex = 0;
         }
+
+        UpdateTrayProfilesMenu();
     }
 
     private void RegisterAllHotkeys()
@@ -538,7 +513,7 @@ public partial class Form1 : Form
         }
     }
 
-    private void gammaTrackBar_ValueChanged(object sender, EventArgs e)
+    private void gammaTrackBar_ValueChanged(object? sender, EventArgs e)
     {
         UpdateSettingsLabel();
         
@@ -551,7 +526,7 @@ public partial class Form1 : Form
         }
     }
 
-    private void contrastTrackBar_ValueChanged(object sender, EventArgs e)
+    private void contrastTrackBar_ValueChanged(object? sender, EventArgs e)
     {
         UpdateSettingsLabel();
         
@@ -564,7 +539,7 @@ public partial class Form1 : Form
         }
     }
 
-    private void profileListBox_SelectedIndexChanged(object sender, EventArgs e)
+    private void profileListBox_SelectedIndexChanged(object? sender, EventArgs e)
     {
         if (profileListBox.SelectedItem is Profile selectedProfile)
         {
@@ -584,7 +559,7 @@ public partial class Form1 : Form
         }
     }
 
-    private void addProfileButton_Click(object sender, EventArgs e)
+    private void addProfileButton_Click(object? sender, EventArgs e)
     {
         if (profileManager == null || gammaTrackBar == null || contrastTrackBar == null)
             return;
@@ -638,7 +613,7 @@ public partial class Form1 : Form
         profileListBox.SelectedItem = newProfile;
     }
 
-    private void updateProfileButton_Click(object sender, EventArgs e)
+    private void updateProfileButton_Click(object? sender, EventArgs e)
     {
         if (profileManager == null || profileListBox == null || 
             gammaTrackBar == null || contrastTrackBar == null)
@@ -659,7 +634,7 @@ public partial class Form1 : Form
         }
     }
 
-    private void deleteProfileButton_Click(object sender, EventArgs e)
+    private void deleteProfileButton_Click(object? sender, EventArgs e)
     {
         if (profileManager == null || profileListBox == null)
             return;
@@ -696,7 +671,7 @@ public partial class Form1 : Form
         }
     }
 
-    private void setHotkeyButton_Click(object sender, EventArgs e)
+    private void setHotkeyButton_Click(object? sender, EventArgs e)
     {
         if (profileListBox.SelectedItem is Profile selectedProfile && hotkeyManager != null && profileManager != null && hotkeyLabel != null)
         {
@@ -787,7 +762,7 @@ public partial class Form1 : Form
         }
     }
 
-    private void resetButton_Click(object sender, EventArgs e)
+    private void resetButton_Click(object? sender, EventArgs e)
     {
         // Reset display to default settings
         if (displayManager != null && gammaTrackBar != null && contrastTrackBar != null)
@@ -803,24 +778,20 @@ public partial class Form1 : Form
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
-        if (e.CloseReason == CloseReason.UserClosing)
+        if (e.CloseReason == CloseReason.UserClosing && minimizeToTray)
         {
-            if (minimizeToTray)
-            {
-                // Hide instead of close when user clicks X
-                e.Cancel = true;
-                this.Hide();
-                isMinimized = true;
-            }
-            // If minimizeToTray is false, allow the form to close normally
+            // Hide instead of close when user clicks X
+            e.Cancel = true;
+            Hide();
+            isMinimized = true;
+            return;
         }
-        else
-        {
-            base.OnFormClosing(e);
-        }
+
+        CleanupResources();
+        base.OnFormClosing(e);
     }
 
-    private void startWithWindowsCheckBox_CheckedChanged(object sender, EventArgs e)
+    private void startWithWindowsCheckBox_CheckedChanged(object? sender, EventArgs e)
     {
         try
         {
@@ -900,7 +871,7 @@ public partial class Form1 : Form
         }
     }
 
-    private void minimizeToTrayCheckBox_CheckedChanged(object sender, EventArgs e)
+    private void minimizeToTrayCheckBox_CheckedChanged(object? sender, EventArgs e)
     {
         try
         {
@@ -1029,9 +1000,9 @@ public partial class Form1 : Form
         UpdateDynamicControlsUI();
     }
     
-    private void dynamicControlsToggle_CheckedChanged(object sender, EventArgs e)
+    private void dynamicControlsToggle_CheckedChanged(object? sender, EventArgs e)
     {
-        if (dynamicControls == null || hotkeyManager == null || displayManager == null || trayIcon == null)
+        if (dynamicControls == null || hotkeyManager == null || displayManager == null)
             return;
             
         bool isEnabled = dynamicControlsToggle.Checked;
@@ -1056,16 +1027,9 @@ public partial class Form1 : Form
                 setHotkeyButton.Enabled = false;
                 
                 // Disable tray menu profile selection
-                if (trayIcon.ContextMenuStrip != null)
+                if (trayProfilesMenu != null)
                 {
-                    foreach (ToolStripItem item in trayIcon.ContextMenuStrip.Items)
-                    {
-                        if (item is ToolStripMenuItem menuItem && menuItem.Text == "Profiles")
-                        {
-                            menuItem.Enabled = false;
-                            break;
-                        }
-                    }
+                    trayProfilesMenu.Enabled = false;
                 }
             }
             else
@@ -1092,16 +1056,9 @@ public partial class Form1 : Form
                 setHotkeyButton.Enabled = true;
                 
                 // Re-enable tray menu profile selection
-                if (trayIcon.ContextMenuStrip != null)
+                if (trayProfilesMenu != null)
                 {
-                    foreach (ToolStripItem item in trayIcon.ContextMenuStrip.Items)
-                    {
-                        if (item is ToolStripMenuItem menuItem && menuItem.Text == "Profiles")
-                        {
-                            menuItem.Enabled = true;
-                            break;
-                        }
-                    }
+                    trayProfilesMenu.Enabled = true;
                 }
             }
             
@@ -1118,9 +1075,13 @@ public partial class Form1 : Form
             dynamicControlsToggle.Checked = dynamicControls.IsEnabled;
             dynamicControlsToggle.CheckedChanged += dynamicControlsToggle_CheckedChanged;
         }
+        finally
+        {
+            UpdateTrayProfilesMenu();
+        }
     }
     
-    private void dynamicGammaTrackBar_ValueChanged(object sender, EventArgs e)
+    private void dynamicGammaTrackBar_ValueChanged(object? sender, EventArgs e)
     {
         if (dynamicControls == null || dynamicGammaTrackBar == null)
             return;
@@ -1130,7 +1091,7 @@ public partial class Form1 : Form
         UpdateDynamicControlsUI();
     }
     
-    private void dynamicContrastTrackBar_ValueChanged(object sender, EventArgs e)
+    private void dynamicContrastTrackBar_ValueChanged(object? sender, EventArgs e)
     {
         if (dynamicControls == null || dynamicContrastTrackBar == null)
             return;
@@ -1140,7 +1101,7 @@ public partial class Form1 : Form
         UpdateDynamicControlsUI();
     }
     
-    private void dynamicControlsResetButton_Click(object sender, EventArgs e)
+    private void dynamicControlsResetButton_Click(object? sender, EventArgs e)
     {
         if (dynamicControls == null)
             return;
@@ -1150,7 +1111,7 @@ public partial class Form1 : Form
         UpdateDynamicControlsUI();
     }
     
-    private void dynamicSaveToProfileButton_Click(object sender, EventArgs e)
+    private void dynamicSaveToProfileButton_Click(object? sender, EventArgs e)
     {
         if (dynamicControls == null || profileManager == null || !dynamicControls.IsEnabled)
             return;
@@ -1230,7 +1191,7 @@ public partial class Form1 : Form
     
     private void LoadDynamicControlsState()
     {
-        if (dynamicControls == null || dynamicControlsToggle == null || trayIcon == null)
+        if (dynamicControls == null || dynamicControlsToggle == null)
             return;
             
         LogMessage("Loading Dynamic Controls state");
@@ -1281,20 +1242,14 @@ public partial class Form1 : Form
                 setHotkeyButton.Enabled = false;
                 
                 // Disable tray menu profile selection
-                if (trayIcon.ContextMenuStrip != null)
+                if (trayProfilesMenu != null)
                 {
-                    foreach (ToolStripItem item in trayIcon.ContextMenuStrip.Items)
-                    {
-                        if (item is ToolStripMenuItem menuItem && menuItem.Text == "Profiles")
-                        {
-                            menuItem.Enabled = false;
-                            break;
-                        }
-                    }
+                    trayProfilesMenu.Enabled = false;
                 }
             }
             
             dynamicControlsToggle.CheckedChanged += dynamicControlsToggle_CheckedChanged;
+            UpdateTrayProfilesMenu();
         }
         catch (Exception ex)
         {
